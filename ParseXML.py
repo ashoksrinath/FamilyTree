@@ -1,5 +1,10 @@
 import xml.etree.ElementTree as ET
+from   Utils import *
 
+
+# #############################################################
+# CLI: class to parentage relationships file
+# -------------------------------------------------------------
 class ParseParentages:
 
     def __init__(self):
@@ -31,7 +36,7 @@ class ParseParentages:
         except ET.ParseError as excParsing:
             print("   ParseParentages: Error parsing string")
         except Exception as excUnhandled:
-            print("   ParseParentages: Unhandled exception")
+            print("   ParseParentages: Unhandled exception:", excUnhandled)
 
         print("ParseParentages::parse - list of parentages from parentages.xml")
         try:
@@ -45,7 +50,7 @@ class ParseParentages:
         except ET.ParseError as excParsing:
             print("   ParseParentages: Error parsing string")
         except Exception as excUnhandled:
-            print("   ParseParentages: Unhandled exception")
+            print("   ParseParentages: Unhandled exception:", excUnhandled)
 
         return
 
