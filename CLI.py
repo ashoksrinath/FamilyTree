@@ -195,22 +195,22 @@ class CLI(cmd.Cmd):
     # ------------------------------------------------------------
     # Shows all parentages
     # ------------------------------------------------------------
-    def do_showparentages(self, line):
-        """showparentages
+    def do_showparents(self, line):
+        """showparents
         Shows all parentages between people in the family
-        e.g., showparentages"""
+        e.g., showparents"""
 
-        dbgPrint("CLI.do_showparentages - entry", TRC_DBG)
+        dbgPrint("CLI.do_showparents - entry", TRC_DBG)
 
         self.lstTokens = line.split()
-        if len(self.lstTokens) == self.dctParams["showparentages"]:
-            self.family.showParentages()
+        if len(self.lstTokens) == self.dctParams["showparents"]:
+            self.family.showParents()
         else:
-            print ("showparentages: invalid parameters (try help)")
+            print ("showparents: invalid parameters (try help)")
         
         return
 
-    # end do_showparentages()
+    # end do_showparents()
 
     # ------------------------------------------------------------
     # Shows all the people in the family
@@ -282,25 +282,6 @@ class CLI(cmd.Cmd):
     # end do_addparents()
 
     # ------------------------------------------------------------
-    # Loads data from the parentages XML file
-    # ------------------------------------------------------------
-    def do_loadparentages(self, line):
-        """loadparentages <parentages-xml-file>
-        Loads XML data for parentages from <parentages-xml-file>.
-        Loading the file is idempotent. Thus, if data for any person
-        already exists it will be overwritten. """
-
-        dbgPrint("CLI.do_loadparentages - entry", TRC_DBG)
-
-        self.lstTokens = line.split()
-        if len(self.lstTokens) == self.dctParams["loadparentages"]:
-            self.family.loadParentages(self.lstTokens[0])   # XML file
-
-        return
-
-    # end do_loadparentages()
-
-    # ------------------------------------------------------------
     # Loads data from the people XML file
     # ------------------------------------------------------------
     def do_loadpeople(self, line):
@@ -318,25 +299,6 @@ class CLI(cmd.Cmd):
         return
 
     # end do_loadpeople()
-
-    # ------------------------------------------------------------
-    # Loads data from the parentages XML file
-    # ------------------------------------------------------------
-    def do_saveparentages(self, line):
-        """saveparentages <parentages-xml-file>
-        Saves XML data for parentages to parentages-xml-file
-        if specified.  Otherwise it saves the data to the filename
-        specified when the script was started"""
-
-        dbgPrint("CLI.do_saveparentages - entry", TRC_DBG)
-
-        self.lstTokens = line.split()
-        if len(self.lstTokens) == self.dctParams["saveparentages"]:
-            self.family.saveParentages(self.lstTokens[0])   # XML file
-
-        return
-
-    # end do_saveparentages()
 
     # ------------------------------------------------------------
     # Loads data from the parentages XML file
@@ -376,20 +338,6 @@ class CLI(cmd.Cmd):
 
     # end do_exit()
 
-    def do_saveparentages(self, line):
-        """saveparentages   parentages-xml-file
-        Saves XML data for parentages to a file"""
-
-        dbgPrint("CLI.do_saveparentages - entry", TRC_DBG)
-
-        self.lstTokens = line.split()
-        if len(self.lstTokens) == self.dctParams["saveparentages"]:
-            self.family.saveParentages(self.lstTokens[0])   # Specific XML file
-        else:
-            self.family.saveParentages(None)                # Parametric XML file
- 
-    # end do_saveparentages()
-
     # ------------------------------------------------------------
     # Seeds dictionary with CLI verbs and required parameter count
     # ------------------------------------------------------------
@@ -409,10 +357,7 @@ class CLI(cmd.Cmd):
         self.dctParams["showparentages"] = 0    # showparentages
         self.dctParams["showchildren"]  = 4     # showchildren  fatherfirst fatherlast motherfirst motherlast
 
-        self.dctParams["loadparentages"] = 1    # loadparentages xml-file-name
         self.dctParams["loadpeople"]    = 1     # loadpeople    xml-file-name
-
-        self.dctParams["saveparentages"] = 1    # saveparentages xml-file-name
         self.dctParams["savepeople"]    = 1     # savepeople    xml-file-name
 
         self.dctParams["exit"]          = 0     # exit

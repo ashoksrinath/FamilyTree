@@ -8,15 +8,14 @@ from   Utils import *
 # MAIN ROUTINE
 # -------------------------------------------------------------
 # Usage:
-#   python3 FamilyTree <people.xml> <parentages.xml> 
+#   python3 FamilyTree <people.xml>
 #   where: 
 #       people.xml = file containing details of people in XML format:
 #       <people>
-#           <person first="unknown" last="unknown" gender="unknown" birthymd="unknown">
-#               <birthcity>"unknown"</birthcity>
-#               <birthstate>"unknown"</birthstate>
-#               <birthcountry>"unknown"</birthcountry>
-#               <birthpostcode>"unknown"</birthpostcode>
+#           <person first="first-name" last="last-name" gender="M|F" birthymd="YYYYMMDD">
+#               <mother first="mothers-first" last="mothers-last" />
+#               <father first="fathers-first" last="fathers-last" />
+#               <birthplace city="city-name" state="state-name" country="country-name" postcode="postcode" />
 #           </person>
 #           ...
 #           <person>
@@ -24,21 +23,6 @@ from   Utils import *
 #           </person>
 #           ...
 #       </people>
-#   and:
-#       parentages.xml = file containing details of parentages in XML format:
-#       <parentages>
-#           <parentage fathersfirst="first" fatherslast="last" mothersfirst="first" motherslast="last">
-#               <child>
-#                   <first>"Unknown"</first>
-#                   <last>"Unknown"</last>
-#               </child>
-#           </parentage>
-#           ...
-#           <parentage fathersfirst="first" fatherslast="last" mothersfirst="first" motherslast="last">
-#               ...
-#           </parentage>
-#           ...
-#       <parentages>
 #
 
 if __name__ == "__main__":
@@ -46,26 +30,23 @@ if __name__ == "__main__":
     # Initialize file-names
     #
     sPeopleFile = None
-    sParentagesFile = None
 
     #
     # Process command-line arguments
     #
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 2:
         sPeopleFile = sys.argv[1]
-        sParentagesFile = sys.argv[2]
 
     else:
-        sUsage = "Usage: " + "python3 " + sys.argv[0] + " <people.xml> <parentages.xml>"
-        print(sUsage)
+        print("Usage: python3 %s <people.xml>" % sys.argv[0])
         pause ("Press return to end")
         sys.exit ()
 
     try:
         #
-        # Create Family instance; pass it the people and parentages file-names
+        # Create Family instance; pass it the people file-name
         #
-        family = Family(sPeopleFile, sParentagesFile)
+        family = Family(sPeopleFile)
 
         #
         # Command-line processing

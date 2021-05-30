@@ -26,7 +26,7 @@ class Person:
         #
         # Initialize parent names
         #
-        self.addParents("", "", "", "")
+        self.setParents(None, None)
 
         #
         # Return
@@ -34,20 +34,6 @@ class Person:
         return
 
     # end def __init__ ()
-
-    # ------------------------------------------------------------
-    # Sets parents for person
-    # ------------------------------------------------------------
-    def addParents(self, sFathersFirst, sFathersLast, sMothersFirst, sMothersLast):
-
-        self.sFathersFirst  = sFathersFirst
-        self.sFathersLast   = sFathersLast 
-        self.sMothersFirst  = sMothersFirst
-        self.sMothersLast   = sMothersLast 
-
-        return
-
-    # end def addParents()
 
     # ------------------------------------------------------------
     # Returns key to this object (first-last)
@@ -105,10 +91,22 @@ class Person:
     # end def setGender()
 
     # ------------------------------------------------------------
+    # Sets parents for person
+    # ------------------------------------------------------------
+    def setParents(self, sFatherKey, sMotherKey):
+
+        self.sFatherKey  = sFatherKey
+        self.sMotherKey  = sMotherKey
+
+        return
+
+    # end def setParents()
+
+    # ------------------------------------------------------------
     # Sets partner (with whom to beget children) for person. Only
     # one partner per person at this time.
     # ------------------------------------------------------------
-    def setPartnerKey(self, sPartnerKey):
+    def setPartner(self, sPartnerKey):
 
         self.sPartnerKey  = sPartnerKey
 
@@ -134,10 +132,11 @@ class Person:
         print("Postal Code: " + self.sBirthPostCode)
 
         print("---")
-        print("Fathers First: " + self.sFathersFirst)
-        print("Fathers Last: " + self.sFathersLast)
-        print("Mothers First: " + self.sMothersFirst)
-        print("Mothers Last: " + self.sMothersLast)
+        print("Fathers First: " + "TODO")
+        print("Fathers Last: " + "TODO")
+        print("Mothers First: " + "TODO")
+        print("Mothers Last: " + "TODO")
+        print ("Partner: " + "TODO")
 
         return
 
