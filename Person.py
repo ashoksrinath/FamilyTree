@@ -117,7 +117,7 @@ class Person:
     # ------------------------------------------------------------
     # Prints all details of a person
     # ------------------------------------------------------------
-    def show(self):
+    def show(self, dctPeople):
 
         print("***")
         print("First name: " + self.sFirstName)
@@ -132,11 +132,32 @@ class Person:
         print("Postal Code: " + self.sBirthPostCode)
 
         print("---")
-        print("Fathers First: " + "TODO")
-        print("Fathers Last: " + "TODO")
-        print("Mothers First: " + "TODO")
-        print("Mothers Last: " + "TODO")
-        print ("Partner: " + "TODO")
+        if self.sMotherKey != None:
+            try:
+                mother = dctPeople[self.sMotherKey]
+                print("Mother: %s %s" % (mother.sFirstName, mother.sLastName))
+            except KeyError:
+                print("Mother: not found")
+        else:
+            print("Mother: not known")
+
+        if self.sFatherKey != None:
+            try:
+                father = dctPeople[self.sFatherKey]
+                print("Father: %s %s" % (father.sFirstName, father.sLastName))
+            except KeyError:
+                print("Father: not found")
+        else:
+            print("Father: not known")
+
+        if self.sPartnerKey != None:
+            try:
+                partner = dctPeople[self.sPartnerKey]
+                print("Partner: %s %s" % (partner.sFirstName, partner.sLastName))
+            except KeyError:
+                print("Partner: not found")
+        else:
+            print("Partner: not known")
 
         return
 

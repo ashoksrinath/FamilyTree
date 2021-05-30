@@ -12,7 +12,7 @@
     <Name>FamilyTree</Name>
     <RootNamespace>FamilyTree</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <CommandLineArguments>people2.xml</CommandLineArguments>
+    <CommandLineArguments>people.xml</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
