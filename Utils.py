@@ -8,10 +8,9 @@
 #   100 - (8) Informational messages
 NO_DBG  = 0
 ERR_DBG = 2
-TRC_DBG = 4
-INF_DBG = 8
+INF_DBG = 4
 
-DBGMASK = 8
+DBGMASK = NO_DBG
 
 def dbgPrint(nDbgLvl, sDbgMsg):
     if (nDbgLvl & DBGMASK):

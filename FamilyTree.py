@@ -33,18 +33,103 @@ class FamilyTree:
     # ------------------------------------------------------------
     def __init__(self, sPeopleFile):
  
-        self.family = Family()
+        self.family         = Family()
+        self.lstRoots       = list()
+        self.lstParentRoots = list()
 
         if len(sPeopleFile.strip()) > 0:
             self.sPeopleFile = sPeopleFile
-            print("Loading file '%s'..." % self.sPeopleFile)
             self.loadFile()
 
-            self.getInput()
+        self.getInput()
 
         return
 
     # end def __init__()
+
+    # ------------------------------------------------------------
+    # Adds parents to the family tree display list
+    # ------------------------------------------------------------
+    def addToRoots(self, sPartnerKey1, sPartnerKey2):
+
+        dbgPrint(INF_DBG, ("FamilyTree.addToRoots: partner keys: %s & %s" % (sPartnerKey1, sPartnerKey2)))
+
+        sParentagesKey = self.family.makeParentageKey(sPartnerKey1, sPartnerKey2)
+        if (sParentagesKey == None):
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: parentage key is None; returning"))
+            return
+
+        try:
+            lstChildren = self.family.dctParentages[sParentagesKey]
+            if len(lstChildren) == 0:
+                dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no children; returning"))
+                return
+        except KeyError:
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no parentage entry for %s; returning" % sParentagesKey))
+            return
+
+        if not sParentagesKey in self.lstParentRoots:
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: adding %s" % sParentagesKey))
+            self.lstParentRoots.append(sParentagesKey)
+        else:
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: %s already added; returning" % sParentagesKey))
+            return
+
+        for sPersonKey in lstChildren:
+            if self.family.dctPeople[sPersonKey].getGender() == "F":
+                sPartnerKey = self.family.dctPeople[sPersonKey].getPartnerKey()
+                if sPartnerKey != None:
+                    self.addToRoots(sPersonKey, sPartnerKey)
+
+    # end def addToTree()
+
+    # ------------------------------------------------------------------------
+    # Checks all entries for referential integrity, removes unknown references
+    # ------------------------------------------------------------------------
+    def fixData(self):
+
+        # ------------------------------------------------------------
+        # Remove partners, mothers and fathers who aren't in dctPeople
+        # ------------------------------------------------------------
+        for person in self.family.dctPeople.values():
+            if person.sPartnerKey != None:
+                if not person.sPartnerKey in self.family.dctPeople:
+                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown partner key '%s' for '%s %s'" %
+                        (person.sPartnerKey, person.sFirstName, person.sLastName)))
+                    person.sPartnerKey = None
+
+            if person.sMothersKey != None:
+                if not person.sMothersKey in self.family.dctPeople:
+                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown mother's key '%s' for '%s %s'") %
+                        (person.sMothersKey, person.sFirstName, person.sLastName))
+                    person.sMothersKey = None
+
+            if person.sFathersKey != None:
+                if not person.sFathersKey in self.family.dctPeople:
+                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown father's key '%s' for '%s %s'") %
+                        (person.sFathersKey, person.sFirstName, person.sLastName))
+                    person.sFathersKey = None
+
+        # ---------------------------------------------------------------------
+        # Remove children from dctParentages values if they aren't in dctPeople
+        # ---------------------------------------------------------------------
+        for sParentsKey, lstChildren in self.family.dctParentages.items():
+            bListModified = False
+            for nIdx in range(0, len(lstChildren)):
+                if not lstChildren[nIdx] in self.family.dctPeople:
+                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown child '%s %s' for parent's key %s"))
+                    lstChildren[nIdx] = None
+                    bListModified = True
+
+            if bListModified:
+                self.family.dctParents[sParentsKey] = list()
+                for nIdx in range(0, len(lstChildren)):
+                    if lstChildren[nIdx] != None:
+                        self.family.dctParents[sParentsKey].append(lstChildren[nIdx])
+
+        return
+
+    # end def fixData()
 
     # ------------------------------------------------------------
     # Gets user-input from the command-line
@@ -59,10 +144,29 @@ class FamilyTree:
     # end def getInput()
 
     # ------------------------------------------------------------
+    # Finds and returns a list of "roots" in the family tree
+    # ------------------------------------------------------------
+    def getRoots(self):
+
+        self.lstRoots.clear()
+        for sPersonKey, person in self.family.dctPeople.items():
+            if (person.sMothersKey == None) and (person.sFathersKey == None):
+                self.lstRoots.append(sPersonKey)
+                dbgPrint(INF_DBG, ("Family.getRoots: Found person '%s %s' with no parents" % (person.sFirstName, person.sLastName)))
+
+
+        dbgPrint(INF_DBG, ("Family.getRoots: Found %d people with no parents" % len(self.lstRoots)))
+
+        return
+
+    # end def getRoots()
+
+    # ------------------------------------------------------------
     # Loads people from XML data file
     # ------------------------------------------------------------
     def loadFile(self):
 
+        print("Loading file '%s'... " % self.sPeopleFile, end=' ')
         try:
             pplTree = ET.parse(self.sPeopleFile)
             pplRoot = pplTree.getroot()
@@ -70,13 +174,14 @@ class FamilyTree:
             for personInfo in personList:
                 self.processPerson(personInfo)
 
+            print("done (%d people added)" % len(self.family.dctPeople))
+
         except FileNotFoundError:
-            print("loadFile - file '%s' not found" % self.sPeopleFile)
+            print("loadfile - file '%s' not found" % self.sPeopleFile)
         except ET.ParseError as excParsing:
-            print("loadFile - error parsing file '%s'" % self.sPeopleFile)
+            print("loadfile - error parsing file '%s'" % self.sPeopleFile)
         except Exception as excUnhandled:
-            print("loadFile - unhandled exception parsing file '%s'" % self.sPeopleFile)
-            print(excUnhandled)
+            print("loadfile - unhandled exception", excUnhandled)
 
         return
 
@@ -115,13 +220,13 @@ class FamilyTree:
         # Set/update birthplace & parents for Person, add child to Parentages list
         # ------------------------------------------------------------------------
         if (person != None) and (sMothersKey != None) and (sFathersKey != None):
-            person.setParents(sMothersKey, sFathersKey)
+            person.setParentsKeys(sMothersKey, sFathersKey)
 
             # -----------------------------------------
             # Set partner relationships between parents
             # -----------------------------------------
-            self.family.dctPeople[sMothersKey].setPartner (sFathersKey)
-            self.family.dctPeople[sFathersKey].setPartner (sMothersKey)
+            self.family.dctPeople[sMothersKey].setPartnerKey (sFathersKey)
+            self.family.dctPeople[sFathersKey].setPartnerKey (sMothersKey)
 
             sParentsKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
             if sParentsKey != None:
@@ -277,7 +382,7 @@ class FamilyTree:
         # -----------------
         # For all people...
         # -----------------
-        for sPersonKey in self.dctPeople:
+        for sPersonKey in self.family.dctPeople:
 
             # ---------------------------------------------------------
             # Create subelement <person>, append it to element <people>
@@ -289,18 +394,18 @@ class FamilyTree:
             # Set the first, last, gender and birthymd subelements for <person>
             # -----------------------------------------------------------------
             first = ET.SubElement(person, "first")
-            first.text = self.dctPeople[sPersonKey].sFirstName
+            first.text = self.family.dctPeople[sPersonKey].sFirstName
 
             last = ET.SubElement(person, "last")
-            last.text = self.dctPeople[sPersonKey].sLastName
+            last.text = self.family.dctPeople[sPersonKey].sLastName
 
             gender = ET.SubElement(person, "gender")
-            gender.text = self.dctPeople[sPersonKey].sGender
+            gender.text = self.family.dctPeople[sPersonKey].sGender
                 
             birthymd = ET.SubElement(person, "birthymd")
-            birthymd.text = self.dctPeople[sPersonKey].sBirthYMD
+            birthymd.text = self.family.dctPeople[sPersonKey].sBirthYMD
 
-        # end for sPersonKey in self.dctPeople
+        # end for sPersonKey in self.family.dctPeople
 
         # ---------------------------------
         # Create XML tree, write it to file
@@ -312,6 +417,34 @@ class FamilyTree:
         return
 
     # end saveFile()
+
+    # ------------------------------------------------------------
+    # Shows the family tree
+    # ------------------------------------------------------------
+    def showTree(self):
+        
+        self.fixData()      # Remove mothers, fathers and spouses with no entries in dctPeople
+        self.getRoots()     # Create list of people-IDs with no father and mother
+
+
+        # Find females who are married and who are in the parentages dictionary with their spouses
+        self.lstParentRoots.clear()
+        for sPersonKey in self.lstRoots:
+            if self.family.dctPeople[sPersonKey].getGender() == "F":
+                sPartnerKey = self.family.dctPeople[sPersonKey].getPartnerKey()
+                if (sPartnerKey != None):
+                    self.addToRoots(sPersonKey, sPartnerKey)
+
+        for sParentageKey in self.lstParentRoots:
+            sPersonKey1, sPersonKey2 = self.family.getPersonKeys(sParentageKey)
+            print ("'%s %s' & '%s %s:" % 
+                (self.family.dctPeople[sPersonKey1].sFirstName, self.family.dctPeople[sPersonKey1].sLastName, 
+                 self.family.dctPeople[sPersonKey2].sFirstName, self.family.dctPeople[sPersonKey2].sLastName))
+        return
+
+    # end def showTree()
+
+# end class FamilyTree ########################################
 
 
 if __name__ == "__main__":
