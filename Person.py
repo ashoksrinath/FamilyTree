@@ -1,4 +1,4 @@
-from   Utils import *
+from Utils import *
 
 
 # #############################################################
@@ -49,6 +49,18 @@ class Person:
     # end def getBirthPlace()
 
     # ------------------------------------------------------------
+    # Returns father's key for person
+    # ------------------------------------------------------------
+    def getFathersKey(self):
+
+        dbgPrint(INF_DBG, ("Person[%s %s].getFathersKey - returning %s" % 
+            (self.sFirstName, self.sLastName, self.sFathersKey)))
+
+        return (self.sFathersKey)
+
+    # end def getFathersKey()
+
+    # ------------------------------------------------------------
     # Returns gender for person.
     # ------------------------------------------------------------
     def getGender(self):
@@ -71,6 +83,18 @@ class Person:
         return (self.sFirstName + "#" + self.sLastName)
 
     # end def getKey()
+
+    # ------------------------------------------------------------
+    # Returns mother's key for person
+    # ------------------------------------------------------------
+    def getMothersKey(self):
+
+        dbgPrint(INF_DBG, ("Person[%s %s].getMothersKey - returning %s" % 
+            (self.sFirstName, self.sLastName, self.sMothersKey)))
+
+        return (self.sMothersKey)
+
+    # end def getMothersKey()
 
     # ------------------------------------------------------------
     # Gets partner (with whom to beget children) for person. Only

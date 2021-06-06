@@ -1,5 +1,5 @@
-from   Utils import *
-from   Person import Person
+from Utils import *
+from Person import Person
 
 
 # #############################################################
@@ -21,24 +21,8 @@ class Family:
     # ------------------------------------------------------------
     # Adds person to family
     # ------------------------------------------------------------
-    def addPerson(self, dctPersonInfo):
+    def addPerson(self, sFirst, sLast, sGender, sBirthYMD):
 
-        sFirst = ""
-        if "first" in dctPersonInfo:
-            sFirst = dctPersonInfo["first"].strip()
-
-        sLast = ""
-        if "last" in dctPersonInfo:
-            sLast = dctPersonInfo["last"].strip()
-
-        sGender = None
-        if "gender" in dctPersonInfo:
-            sGender = dctPersonInfo["gender"].strip()
-
-        sBirthYMD = None
-        if "birthymd" in dctPersonInfo:
-            sBirthYMD = dctPersonInfo["birthymd"].strip()
-            
         sPersonKey = self.makePersonKey(sFirst, sLast)
         if sPersonKey != None:
             try:
@@ -135,11 +119,14 @@ class Family:
     # ------------------------------------------------------------
     def makePersonKey(self, sFirst, sLast):
 
-        sPersonKey = sFirst.strip() + "#" + sLast.strip()
-        if sPersonKey != "#":
-            return sPersonKey
-        else:
+        if (sFirst == None) or (sLast == None):
             return None
+
+        sPersonKey = sFirst.strip() + "#" + sLast.strip()
+        if sPersonKey == "#":
+            return None
+
+        return sPersonKey
 
     # end def makePersonKey()
 
@@ -148,11 +135,14 @@ class Family:
     # ------------------------------------------------------------
     def makeParentageKey(self, sMotherKey, sFathersKey):
 
-        sParentsKey = sMotherKey + "&" + sFathersKey
-        if sParentsKey != "&":
-            return sParentsKey
-        else:
+        if (sMotherKey == None) or (sFathersKey == None):
             return None
+
+        sParentageKey = sMotherKey.strip() + "&" + sFathersKey.strip()
+        if sParentageKey == "&":
+            return None
+
+        return sParentageKey
 
     # end def makeParentageKey()
 

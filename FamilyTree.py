@@ -34,7 +34,6 @@ class FamilyTree:
     def __init__(self, sPeopleFile):
  
         self.family         = Family()
-        self.lstRoots       = list()
         self.lstParentRoots = list()
 
         if len(sPeopleFile.strip()) > 0:
@@ -148,16 +147,16 @@ class FamilyTree:
     # ------------------------------------------------------------
     def getRoots(self):
 
-        self.lstRoots.clear()
+        lstRoots = list()
         for sPersonKey, person in self.family.dctPeople.items():
             if (person.sMothersKey == None) and (person.sFathersKey == None):
-                self.lstRoots.append(sPersonKey)
+                lstRoots.append(sPersonKey)
                 dbgPrint(INF_DBG, ("Family.getRoots: Found person '%s %s' with no parents" % (person.sFirstName, person.sLastName)))
 
 
-        dbgPrint(INF_DBG, ("Family.getRoots: Found %d people with no parents" % len(self.lstRoots)))
+        dbgPrint(INF_DBG, ("Family.getRoots: Returning %d roots" % len(lstRoots)))
 
-        return
+        return lstRoots
 
     # end def getRoots()
 
@@ -192,112 +191,103 @@ class FamilyTree:
     # ------------------------------------------------------------
     def processPerson(self, personXML):
 
-        person =        None
-        sMothersKey =   None
-        sFathersKey =   None
+        person      = None
+        sMothersKey = None
+        sFathersKey = None
 
         try:
+            # --------------------
+            # Add person to family
+            # --------------------
             if personXML.tag == "person":
-                sPersonKey = self.family.addPerson(personXML.attrib)
-                if sPersonKey != None:
-                    person = self.family.dctPeople[sPersonKey]
+                sFirst = None
+                if "first" in personXML.attrib:
+                    sFirst =personXML.attrib["first"]
 
+                sLast = None
+                if "last" in personXML.attrib:
+                    sLast = personXML.attrib["last"]
+
+                sGender = None
+                if "gender" in personXML.attrib:
+                   sGender = personXML.attrib["gender"]
+
+                sBirthYMD = None
+                if "birthymd" in personXML.attrib:
+                   sBirthYMD = personXML.attrib["birthymd"]
+
+                sPersonKey = self.family.addPerson(sFirst, sLast, sGender, sBirthYMD)
+                if sPersonKey == None:
+                    return
+
+                # ---------------------------------------
+                # Process birthplace & parents for Person
+                # ---------------------------------------
+                person = self.family.dctPeople[sPersonKey]
                 infoList = list(personXML)
                 for infoItem in infoList:
-                    sTag, sKey = self.processInfo(person, infoItem)
-                    if sTag == "father":
-                        sFathersKey = sKey
-                    elif sTag == "mother":
-                        sMothersKey = sKey
+                    if infoItem.tag == "birthplc":
+                        self.process_birthplc(person, infoItem.attrib)
+
+                    elif infoItem.tag == "father":
+                        sFathersKey = self.process_father(person, infoItem.attrib)
+
+                    elif infoItem.tag == "mother":
+                        sMothersKey = self.process_mother(person, infoItem.attrib)
+
+                    else:
+                        dbgPrint(ERR_DBG, ("Error, skipping unrecognized tag: %s" % infoItem.tag))
+
                 # end for infoItem in infoList
+
+                # -----------------------------------------------------------------
+                # Set parents for Person, set partner relationships between parents
+                # -----------------------------------------------------------------
+                person.setParentsKeys(sMothersKey, sFathersKey)
+                self.family.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
+                self.family.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
+
+                # ---------------------------------
+                # Create/update parentages register
+                # ---------------------------------
+                sParentsKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
+                if sParentsKey != None:
+                    try:
+                        lstChildren = self.family.dctParentages[sParentsKey]
+                    except KeyError:
+                        lstChildren = list()
+                        self.family.dctParentages[sParentsKey] = lstChildren           
+
+                    lstChildren.append(sPersonKey)
+
+                # end if (person != None) and (MothersKey != None) and (sFathersKeys != None)
 
         except Exception as extinction:
             dbgPrint(ERR_DBG, ("processPerson - error processing: ", personXML.attrib))
             dbgPrint(ERR_DBG, ("processPerson - unhandled exception: ", extinction))
-            return
-
-        # ------------------------------------------------------------------------
-        # Set/update birthplace & parents for Person, add child to Parentages list
-        # ------------------------------------------------------------------------
-        if (person != None) and (sMothersKey != None) and (sFathersKey != None):
-            person.setParentsKeys(sMothersKey, sFathersKey)
-
-            # -----------------------------------------
-            # Set partner relationships between parents
-            # -----------------------------------------
-            self.family.dctPeople[sMothersKey].setPartnerKey (sFathersKey)
-            self.family.dctPeople[sFathersKey].setPartnerKey (sMothersKey)
-
-            sParentsKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
-            if sParentsKey != None:
-                try:
-                    lstChildren = self.family.dctParentages[sParentsKey]
-                except KeyError:
-                    lstChildren = list()
-                    self.family.dctParentages[sParentsKey] = lstChildren           
-
-                lstChildren.append(sPersonKey)
-
-        # end if (person != None) and (MothersKey != None) and (sFathersKeys != None)
 
         return
 
     # end def processPerson()
 
     # ------------------------------------------------------------
-    # Processes additional information about a person
-    # ------------------------------------------------------------
-    def processInfo(self, person, infoItem):
-
-        sFathersKey = None
-        sMothersKey = None
-
-        # ----------------------------
-        # Process person's  birthplace
-        # ----------------------------
-        if infoItem.tag == "birthplc":
-            self.process_birthplc(person, infoItem.attrib)
-            return infoItem.tag, None
-
-        # ------------------------
-        # Process person's  father
-        # ------------------------
-        elif infoItem.tag == "father":
-            sFathersKey = self.process_father(person, infoItem.attrib)
-            return infoItem.tag, sFathersKey
-
-        # ------------------------
-        # Process person's  mother
-        # ------------------------
-        elif infoItem.tag == "mother":
-            sMothersKey = self.process_mother(person, infoItem.attrib)
-            return infoItem.tag, sMothersKey
-
-        else:
-            dbgPrint(ERR_DBG, ("Error, skipping unrecognized tag: %s" % infoItem.tag))
-            return None, None
-
-
-    # end def processInfo()
-
-    # ------------------------------------------------------------
     # Processes birth-place information for a person
     # ------------------------------------------------------------
     def process_birthplc(self, person, dctBirthPlc):
 
-        sCity       = ""
+        sCity = None
         if "city" in dctBirthPlc:
             sCity = dctBirthPlc["city"]
 
-        sState      = ""
+        sState = None
         if "state" in dctBirthPlc:
             sState = dctBirthPlc["state"]
 
-        sPostCode   = ""
+        sPostCode = None
         if "postcode" in dctBirthPlc:
             sPostCode = dctBirthPlc["postcode"]
 
-        sCountry    = ""
+        sCountry = None
         if "country" in dctBirthPlc:
             sCountry = dctBirthPlc["country"]
 
@@ -312,22 +302,18 @@ class FamilyTree:
     # ------------------------------------------------------------
     def process_father(self, person, dctPersonInfo):
 
-        sFirst = ""
+        sFirst = None
         if "first" in dctPersonInfo:
             sFirst = dctPersonInfo["first"]
 
-        sLast = ""
+        sLast = None
         if "last" in dctPersonInfo:
             sLast = dctPersonInfo["last"]
 
+        sGender = "M"
         sPersonKey = self.family.makePersonKey(sFirst, sLast)
         if (sPersonKey != None) and (not sPersonKey in self.family.dctPeople):
-            dctFathersInfo = dict()
-            dctFathersInfo["first"]  = sFirst
-            dctFathersInfo["last"]   = sLast
-            dctFathersInfo["gender"] = "M"
-
-            self.family.addPerson(dctFathersInfo)
+            self.family.addPerson(sFirst, sLast, sGender, None)
 
         return sPersonKey
 
@@ -338,21 +324,18 @@ class FamilyTree:
     # ------------------------------------------------------------
     def process_mother(self, person, dctPersonInfo):
 
-        sFirst = ""
+        sFirst = None
         if "first" in dctPersonInfo:
             sFirst = dctPersonInfo["first"]
 
-        sLast = ""
+        sLast = None
         if "last" in dctPersonInfo:
             sLast = dctPersonInfo["last"]
 
+        sGender = "F"
         sPersonKey = self.family.makePersonKey(sFirst, sLast)
         if (sPersonKey != None) and (not sPersonKey in self.family.dctPeople):
-            dctMothersInfo = dict()
-            dctMothersInfo["first"]  = sFirst
-            dctMothersInfo["last"]   = sLast
-            dctMothersInfo["gender"] = "F"
-            self.family.addPerson(dctMothersInfo)
+            self.family.addPerson(sFirst, sLast, sGender, None)
 
         return sPersonKey
 
@@ -377,42 +360,64 @@ class FamilyTree:
         # --------------------------------
         # Create root element <parentages>
         # --------------------------------
-        people = ET.Element("people")
+        e_people = ET.Element("people")
 
         # -----------------
         # For all people...
         # -----------------
-        for sPersonKey in self.family.dctPeople:
+        for sPersonKey, person in self.family.dctPeople.items():
 
-            # ---------------------------------------------------------
-            # Create subelement <person>, append it to element <people>
-            # ---------------------------------------------------------
-            person = ET.Element("person")
-            people.append(person)
+            # ----------------------------------------------------------------------
+            # Create element <person>, set attributes, append it to element <people>
+            # ----------------------------------------------------------------------
+            e_person = ET.Element("person")
+            e_person.attrib["first"]    = person.sFirstName
+            e_person.attrib["last"]     = person.sLastName
+            e_person.attrib["gender"]   = person.sGender
+            e_person.attrib["birthymd"] = person.sBirthYMD
 
-            # -----------------------------------------------------------------
-            # Set the first, last, gender and birthymd subelements for <person>
-            # -----------------------------------------------------------------
-            first = ET.SubElement(person, "first")
-            first.text = self.family.dctPeople[sPersonKey].sFirstName
+            # -------------------------------------------------------------------------
+            # Create subelement <father>, set attributes, append it to element <person>
+            # -------------------------------------------------------------------------
+            e_people.append(e_person)
 
-            last = ET.SubElement(person, "last")
-            last.text = self.family.dctPeople[sPersonKey].sLastName
+            sFathersKey = person.getFathersKey()
+            if sFathersKey != None:
+                sFirst, sLast = self.family.getPersonNames(sFathersKey)
+                e_father = ET.Element("father")
+                e_father.attrib["first"] = sFirst
+                e_father.attrib["last"]  = sLast
+                e_person.append(e_father)
 
-            gender = ET.SubElement(person, "gender")
-            gender.text = self.family.dctPeople[sPersonKey].sGender
-                
-            birthymd = ET.SubElement(person, "birthymd")
-            birthymd.text = self.family.dctPeople[sPersonKey].sBirthYMD
+            sMothersKey = person.getMothersKey()
+            if sMothersKey != None:
+                sFirst, sLast = self.family.getPersonNames(sMothersKey)
+                e_mother = ET.Element("mother")
+                e_mother.attrib["first"] = sFirst
+                e_mother.attrib["last"]  = sLast
+                e_person.append(e_mother)
+
+            sBirthCity, sBirthState, sBirthCountry, sBirthPostCode = person.getBirthPlace()
+            if (sBirthCity != None) or (sBirthState != None) or (sBirthCountry != None) or (sBirthPostCode != None):
+                e_birthplc = ET.Element("birthplc")
+                if sBirthCity != None:
+                    e_birthplc.attrib["city"] = sBirthCity
+                if sBirthState != None:
+                    e_birthplc.attrib["state"] = sBirthState
+                if sBirthCountry != None:
+                    e_birthplc.attrib["country"] = sBirthCountry
+                if sBirthPostCode != None:
+                    e_birthplc.attrib["postcode"] = sBirthPostCode
+                e_person.append(e_birthplc)
 
         # end for sPersonKey in self.family.dctPeople
 
         # ---------------------------------
         # Create XML tree, write it to file
         # ---------------------------------
-        tree = ET.ElementTree(people)
+        et_people = ET.ElementTree(e_people)
         with open(sOutputFilename, "wb") as fhOutputfile:
-            tree.write(fhOutputfile)
+            et_people.write(fhOutputfile)
 
         return
 
@@ -423,13 +428,19 @@ class FamilyTree:
     # ------------------------------------------------------------
     def showTree(self):
         
-        self.fixData()      # Remove mothers, fathers and spouses with no entries in dctPeople
-        self.getRoots()     # Create list of people-IDs with no father and mother
+        # -----------------------------------------------------------------
+        # Remove mothers, fathers and spouses with no entries in dctPeople,
+        # create list of people with no father and mother (roots)
+        # -----------------------------------------------------------------
+        self.fixData()      
+        lstRoots = self.getRoots()     
 
-
-        # Find females who are married and who are in the parentages dictionary with their spouses
+        # ---------------------------------------------------------------------------
+        # Find females roots who are in the parentages dictionary with their
+        # partners, add them to the list of parent-roots
+        # ---------------------------------------------------------------------------
         self.lstParentRoots.clear()
-        for sPersonKey in self.lstRoots:
+        for sPersonKey in lstRoots:
             if self.family.dctPeople[sPersonKey].getGender() == "F":
                 sPartnerKey = self.family.dctPeople[sPersonKey].getPartnerKey()
                 if (sPartnerKey != None):
@@ -440,6 +451,7 @@ class FamilyTree:
             print ("'%s %s' & '%s %s:" % 
                 (self.family.dctPeople[sPersonKey1].sFirstName, self.family.dctPeople[sPersonKey1].sLastName, 
                  self.family.dctPeople[sPersonKey2].sFirstName, self.family.dctPeople[sPersonKey2].sLastName))
+
         return
 
     # end def showTree()

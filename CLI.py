@@ -38,12 +38,10 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == self.dctParamCnt["addperson"]:
-            dctPersonInfo = dict()
-            dctPersonInfo["first"]      = lstTokens[0]
-            dctPersonInfo["last"]       = lstTokens[1]
-            dctPersonInfo["gender"]     = lstTokens[2]
-            dctPersonInfo["birthymd"]   = lstTokens[3]
-            self.familyTree.family.addPerson(dctPersonInfo)
+            self.familyTree.family.addPerson(lstTokens[0],  # First
+                                             lstTokens[1],  # Last
+                                             lstTokens[2],  # Gender
+                                             lstTokens[3])  #  BirthYMD
         else:
             print ("addperson: invalid parameters (try help addperson)")
         
@@ -186,9 +184,9 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == self.dctParamCnt["savefile"]:
-            self.familyTree.family.saveFile(lstTokens[0])   # Specific XML file
+            self.familyTree.saveFile(lstTokens[0])   # Specific XML file
         else:
-            self.familyTree.family.saveFile(None)           # Parametric XML file
+            self.familyTree.saveFile(None)           # Parametric XML file
 
         return
 
