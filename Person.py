@@ -19,15 +19,18 @@ class Person:
         self.sFirstName     = sFirstName
         self.sLastName      = sLastName
         self.sGender        = sGender
-        self.sBirthYMD      = sBirthYMD 
+        self.sBirthYMD      = sBirthYMD
+
+        #
+        # Initialize class variables
+        #
         self.sMothersKey    = None
         self.sFathersKey    = None
         self.sPartnerKey    = None
-
-        #
-        # Initialize birthplace properties
-        #
-        self.setBirthPlace(None, None, None, None)
+        self.sBirthCity     = None
+        self.sBirthState    = None
+        self.sBirthCountry  = None
+        self.sBirthPostCode = None
 
         #
         # Return
@@ -141,6 +144,20 @@ class Person:
     # end def setBirthYMD()
 
     # ------------------------------------------------------------
+    # Sets father's key for person
+    # ------------------------------------------------------------
+    def setFathersKey(self, sFathersKey):
+
+        dbgPrint(INF_DBG, ("Person[%s %s].setFathersKey - from %s to %s" %
+            (self.sFirstName, self.sLastName, self.sFathersKey, sFathersKey)))
+
+        self.sFathersKey  = sFathersKey
+
+        return
+
+    # end def setFathersKey()
+
+    # ------------------------------------------------------------
     # Sets gender for person
     # ------------------------------------------------------------
     def setGender(self, sGender):
@@ -157,17 +174,16 @@ class Person:
     # ------------------------------------------------------------
     # Sets parents for person
     # ------------------------------------------------------------
-    def setParentsKeys(self, sMothersKey, sFathersKey):
+    def setMothersKey(self, sMothersKey):
 
-        dbgPrint(INF_DBG, ("Person[%s %s].setParentsKeys - mother's: %s father's: %s" %
-            (self.sFirstName, self.sLastName, sMothersKey, sFathersKey)))
+        dbgPrint(INF_DBG, ("Person[%s %s].setsMothersKey - from %s to %s" %
+            (self.sFirstName, self.sLastName, self.sMothersKey, sMothersKey)))
 
         self.sMothersKey  = sMothersKey
-        self.sFathersKey  = sFathersKey
 
         return
 
-    # end def setParents()
+    # end def setsMothersKey()
 
     # ------------------------------------------------------------
     # Sets partner (with whom to beget children) for person. Only

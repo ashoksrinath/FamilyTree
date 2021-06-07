@@ -36,9 +36,8 @@ class FamilyTree:
         self.family         = Family()
         self.lstParentRoots = list()
 
-        if len(sPeopleFile.strip()) > 0:
-            self.sPeopleFile = sPeopleFile
-            self.loadFile()
+        if sPeopleFile != None:
+            self.loadFile(sPeopleFile)
 
         self.getInput()
 
@@ -163,28 +162,48 @@ class FamilyTree:
     # ------------------------------------------------------------
     # Loads people from XML data file
     # ------------------------------------------------------------
-    def loadFile(self):
+    def loadFile(self, sFileName):
 
-        print("Loading file '%s'... " % self.sPeopleFile, end=' ')
+        print("Loading file '%s'... " % sFileName)
         try:
-            pplTree = ET.parse(self.sPeopleFile)
+            pplTree = ET.parse(sFileName)
             pplRoot = pplTree.getroot()
             personList = list(pplRoot)
             for personInfo in personList:
                 self.processPerson(personInfo)
 
-            print("done (%d people added)" % len(self.family.dctPeople))
-
         except FileNotFoundError:
-            print("loadfile - file '%s' not found" % self.sPeopleFile)
+            print("loadfile - file '%s' not found" % sFileName)
         except ET.ParseError as excParsing:
-            print("loadfile - error parsing file '%s'" % self.sPeopleFile)
+            print("loadfile - error parsing file '%s'" % sFileName)
         except Exception as excUnhandled:
             print("loadfile - unhandled exception", excUnhandled)
 
         return
 
     # end def loadFile()
+
+    # ------------------------------------------------------------
+    # Adds CR/LF to elements in XML
+    # ------------------------------------------------------------
+    def makePrettyXML(elem, level=0):
+        i = os.linesep + level*"  "
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "  "
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for elem in elem:
+                indent(elem, level+1)
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+
+        return
+
+    # end def makePrettyXML()
 
     # ------------------------------------------------------------
     # Processes person from XML
@@ -202,7 +221,7 @@ class FamilyTree:
             if personXML.tag == "person":
                 sFirst = None
                 if "first" in personXML.attrib:
-                    sFirst =personXML.attrib["first"]
+                    sFirst = personXML.attrib["first"]
 
                 sLast = None
                 if "last" in personXML.attrib:
@@ -218,6 +237,7 @@ class FamilyTree:
 
                 sPersonKey = self.family.addPerson(sFirst, sLast, sGender, sBirthYMD)
                 if sPersonKey == None:
+                    dbgPrint(ERR_DBG, "FamilyTree.processPerson - error, sPersonKey is None")
                     return
 
                 # ---------------------------------------
@@ -227,44 +247,47 @@ class FamilyTree:
                 infoList = list(personXML)
                 for infoItem in infoList:
                     if infoItem.tag == "birthplc":
-                        self.process_birthplc(person, infoItem.attrib)
+                        self.processBirthPlace(person, infoItem.attrib)
 
                     elif infoItem.tag == "father":
-                        sFathersKey = self.process_father(person, infoItem.attrib)
+                        sFathersKey = self.processFather(person, infoItem.attrib)
 
                     elif infoItem.tag == "mother":
-                        sMothersKey = self.process_mother(person, infoItem.attrib)
+                        sMothersKey = self.processMother(person, infoItem.attrib)
 
                     else:
-                        dbgPrint(ERR_DBG, ("Error, skipping unrecognized tag: %s" % infoItem.tag))
+                        dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error, skipping unrecognized tag: %s" % infoItem.tag))
 
                 # end for infoItem in infoList
 
-                # -----------------------------------------------------------------
-                # Set parents for Person, set partner relationships between parents
-                # -----------------------------------------------------------------
-                person.setParentsKeys(sMothersKey, sFathersKey)
-                self.family.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
-                self.family.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
+                if (sMothersKey != None) and (sFathersKey != None):
+                    # -----------------------------------------
+                    # Set partner relationships between parents
+                    # -----------------------------------------
+                    if sMothersKey in self.family.dctPeople:
+                        self.family.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
 
-                # ---------------------------------
-                # Create/update parentages register
-                # ---------------------------------
-                sParentsKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
-                if sParentsKey != None:
-                    try:
-                        lstChildren = self.family.dctParentages[sParentsKey]
-                    except KeyError:
-                        lstChildren = list()
-                        self.family.dctParentages[sParentsKey] = lstChildren           
+                    if sFathersKey in self.family.dctPeople:
+                        self.family.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
 
-                    lstChildren.append(sPersonKey)
+                    # ---------------------------------
+                    # Create/update parentages register
+                    # ---------------------------------
+                    sParentageKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
+                    if sParentageKey != None:
+                        try:
+                            lstChildren = self.family.dctParentages[sParentageKey]
+                        except KeyError:
+                            lstChildren = list()
+                            self.family.dctParentages[sParentageKey] = lstChildren           
+
+                        lstChildren.append(sPersonKey)
 
                 # end if (person != None) and (MothersKey != None) and (sFathersKeys != None)
 
         except Exception as extinction:
-            dbgPrint(ERR_DBG, ("processPerson - error processing: ", personXML.attrib))
-            dbgPrint(ERR_DBG, ("processPerson - unhandled exception: ", extinction))
+            dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error processing: ", personXML.attrib))
+            dbgPrint(ERR_DBG, ("FamilyTree.processPerson - unhandled exception: ", extinction))
 
         return
 
@@ -273,7 +296,7 @@ class FamilyTree:
     # ------------------------------------------------------------
     # Processes birth-place information for a person
     # ------------------------------------------------------------
-    def process_birthplc(self, person, dctBirthPlc):
+    def processBirthPlace(self, person, dctBirthPlc):
 
         sCity = None
         if "city" in dctBirthPlc:
@@ -295,12 +318,12 @@ class FamilyTree:
 
         return
 
-    # end def process_birthplc()
+    # end def processBirthPlace()
 
     # ------------------------------------------------------------
     # Processes father's information for a person
     # ------------------------------------------------------------
-    def process_father(self, person, dctPersonInfo):
+    def processFather(self, person, dctPersonInfo):
 
         sFirst = None
         if "first" in dctPersonInfo:
@@ -310,19 +333,22 @@ class FamilyTree:
         if "last" in dctPersonInfo:
             sLast = dctPersonInfo["last"]
 
-        sGender = "M"
         sPersonKey = self.family.makePersonKey(sFirst, sLast)
-        if (sPersonKey != None) and (not sPersonKey in self.family.dctPeople):
-            self.family.addPerson(sFirst, sLast, sGender, None)
+        if sPersonKey != None:
+            person.setFathersKey(sPersonKey)
+
+            if  not sPersonKey in self.family.dctPeople:
+                sGender = "M"
+                self.family.addPerson(sFirst, sLast, sGender, None)
 
         return sPersonKey
 
-    # end def process_father()
+    # end def processFather()
 
     # ------------------------------------------------------------
     # Processes mother's information for a person
     # ------------------------------------------------------------
-    def process_mother(self, person, dctPersonInfo):
+    def processMother(self, person, dctPersonInfo):
 
         sFirst = None
         if "first" in dctPersonInfo:
@@ -332,30 +358,22 @@ class FamilyTree:
         if "last" in dctPersonInfo:
             sLast = dctPersonInfo["last"]
 
-        sGender = "F"
         sPersonKey = self.family.makePersonKey(sFirst, sLast)
-        if (sPersonKey != None) and (not sPersonKey in self.family.dctPeople):
-            self.family.addPerson(sFirst, sLast, sGender, None)
+        if sPersonKey != None:
+            person.setMothersKey(sPersonKey)
+
+            if not sPersonKey in self.family.dctPeople:
+                sGender = "F"
+                self.family.addPerson(sFirst, sLast, sGender, None)
 
         return sPersonKey
 
-    # end def process_mother()
+    # end def processMother()
 
     # ------------------------------------------------------------
     # Saves people data to file in XML format
     # ------------------------------------------------------------
     def saveFile(self, sXMLfileName):
-
-        # ---------------------------------------
-        # Ensure that we have an output file-name
-        # ---------------------------------------
-        sOutputFilename = None
-        if (sXMLfileName != None):
-            sOutputFilename = sXMLfileName
-        else:
-            sOutputFilename = self.sPeopleFile
-        if sOutputFilename == None:
-            return
 
         # --------------------------------
         # Create root element <parentages>
@@ -416,7 +434,7 @@ class FamilyTree:
         # Create XML tree, write it to file
         # ---------------------------------
         et_people = ET.ElementTree(e_people)
-        with open(sOutputFilename, "wb") as fhOutputfile:
+        with open(sXMLfileName, "wb") as fhOutputfile:
             et_people.write(fhOutputfile)
 
         return
@@ -468,11 +486,12 @@ if __name__ == "__main__":
     #
     # Process command-line arguments
     #
-    if len(sys.argv) == 2:
-        sPeopleFile = sys.argv[1]
-
+    if len(sys.argv) <= 2:
+        if len(sys.argv) == 2:
+            sPeopleFile = sys.argv[1]
     else:
-        print("Usage: python3 %s <people.xml>" % sys.argv[0])
+        print("Usage: python3 %s [file-name]" % sys.argv[0])
+        print("       where file-name contains XML data about people")
         pause ("Press return to end")
         sys.exit ()
 

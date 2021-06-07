@@ -163,7 +163,8 @@ class Family:
                 sPersonKey = lstChildren.pop()
                 try:
                     person = self.dctPeople[sPersonKey]
-                    person.setParentsKeys(None, None)
+                    person.setMothersKey(None)
+                    person.setFathersKey(None)
                 except KeyError:
                     sFirst, sLast = self.getPersonNames(sPersonKey)
                     print("removechildren: person '%s %s' not found" % (sFirst, sLast))
@@ -212,29 +213,50 @@ class Family:
     # end def setBirthYMD()
 
     # ------------------------------------------------------------
-    # Sets parents for person
+    # Sets father for person
     # ------------------------------------------------------------
-    def setParents(self, sFirst, sLast, sMothersFirst, sMothersLast, sFathersFirst, sFathersLast):
+    def setFather(self, sFirst, sLast, sFathersFirst, sFathersLast):
+
+        sPersonKey = self.makePersonKey(sFirst, sLast)
+        if sPersonKey != None:
+            try:
+                person = self.dctPeople[sPersonKey]
+                sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
+                if sFathersKey != None:
+                    person.setFathersKey(sFathersKey)
+                else:
+                    print("setfather - father's first and last name required")
+            except KeyError:
+                print("setfather - person '%s %s' not found" % (sFirst, sLast))
+        else:
+            print("setfather - person's first and last name required")
+
+        return sPersonKey
+
+    # end def setFather()
+
+    # ------------------------------------------------------------
+    # Sets mother for person
+    # ------------------------------------------------------------
+    def setMother(self, sFirst, sLast, sMothersFirst, sMothersLast):
 
         sPersonKey = self.makePersonKey(sFirst, sLast)
         if sPersonKey != None:
             try:
                 person = self.dctPeople[sPersonKey]
                 sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
-                sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
-
-                if not (sMothersKey == None and sFathersKey == None):
-                    person.setParentsKeys(sMothersKey, sFathersKey)
+                if sMothersKey != None:
+                    person.setMothersKey(sMothersKey)
                 else:
-                    print("setparents - mother's and father's names required")
+                    print("setmother - mother's first and last name required")
             except KeyError:
-                print("setparents - person '%s %s' not found" % (sFirst, sLast))
+                print("setmother - person '%s %s' not found" % (sFirst, sLast))
         else:
-            print("setparents - person's first and last name required")
+            print("setmother - person's first and last name required")
 
         return sPersonKey
 
-    # end def setParents()
+    # end def setMother()
 
     # ------------------------------------------------------------
     # Shows the children of parents based on parent names

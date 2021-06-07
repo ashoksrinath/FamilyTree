@@ -142,7 +142,7 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == self.dctParamCnt["loadfile"]:
-            self.familyTree.family.loadPeople(lstTokens[0])   # XML file
+            self.familyTree.loadFile(lstTokens[0])   # XML file
 
         return
 
@@ -175,18 +175,16 @@ class CLI(cmd.Cmd):
     # ------------------------------------------------------------
     def do_savefile(self, line):
         """savefile <xml-file>
-        Saves XML data for people to <xml-file> if provided.  
-        Otherwise it saves the data to the filename specified 
-        when the script was started
-        e.g., savefile myfamilytree.xml"""
+        Saves XML data for people to specified <xml-file>
+        e.g., savefile familytree.xml"""
 
         dbgPrint(INF_DBG, "CLI.do_savefile - entry")
 
         lstTokens = line.split()
         if len(lstTokens) == self.dctParamCnt["savefile"]:
-            self.familyTree.saveFile(lstTokens[0])   # Specific XML file
+            self.familyTree.saveFile(lstTokens[0])   # Output XML filename
         else:
-            self.familyTree.saveFile(None)           # Parametric XML file
+            print ("savefile: invalid parameters (try 'help savefile')")
 
         return
 
@@ -199,11 +197,30 @@ class CLI(cmd.Cmd):
         """setbirthplc <first-name> <last-name> <city> <state> <country> <postcode>
         Sets birthplace information for a person with first-name <first-name>
         and last-name <last-name>
-        e.g., setbirthplc Fir Lastman Columbus OH USA 43210"""
+        e.g., setbirthplc Baby Bear Goldieville CA USA 12345
+        If a parameter has white spaces in it, enclose the parameter within quotes.
+        e.g., setbirthplc Baby Bear "Goldie Locks" CA USA 12345
+
+        """
 
         dbgPrint(INF_DBG, "CLI.do_setbirthplc - entry")
 
-        lstTokens = line.split()
+        if '"' in line:
+            lstTmp = line.split()
+            lstTokens = list()
+
+            sFullString = None
+            for sToken in lstTmp:
+                if sToken.startswith('"'):
+                    sFullString = sToken[1:]
+                elif sToken.endswith('"'):
+                    sFullString = sFullString + " " + sToken[:-1]
+                    lstTokens.append(sFullString)
+                else:
+                    lstTokens.append(sToken)
+        else:
+            lstTokens = line.split()
+
         if len(lstTokens) == self.dctParamCnt["setbirthplc"]:
             self.familyTree.family.setBirthPlace( lstTokens[0],    # First-name
                                                   lstTokens[1],    # Last-name
@@ -265,31 +282,52 @@ class CLI(cmd.Cmd):
     # end do_setgender()
 
     # ------------------------------------------------------------
-    # Sets the parents (father and mother) for a person
+    # Sets the father for a person
     # ------------------------------------------------------------
-    def do_setparents(self, line):
-        """setparents <first-name> <last-name> <mothers-first> <mothers-last> <fathers-first> <fathers-last>
-        Sets the parents of the person with first-name <first-name> and last-name <last-name>. 
-        The mother's first-name is set to <mothers-first> and last name to <mothers-last>.
+    def do_setfather(self, line):
+        """setfather <first-name> <last-name> <fathers-first> <fathers-last>
+        Sets the father for the person with first-name <first-name> and last-name <last-name>. 
         The father's first-name is set to <fathers-first> and last-name to <father-last>
-        e.g., setparents Baby Bear Mamma Bear Papa Bear"""
+        e.g., setfather Baby Bear Papa Bear"""
 
-        dbgPrint(INF_DBG, "CLI.do_setparents - entry")
+        dbgPrint(INF_DBG, "CLI.do_setfather - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["setparents"]:
-            self.familyTree.family.setParents(  lstTokens[0],  # First
-                                                lstTokens[1],  # Last
-                                                lstTokens[2],  # Mother's first
-                                                lstTokens[3],  # Mother's last
-                                                lstTokens[4],  # Father's first
-                                                lstTokens[5])  # Father's last
+        if len(lstTokens) == self.dctParamCnt["setfather"]:
+            self.familyTree.family.setFather(   lstTokens[0],   # First
+                                                lstTokens[1],   # Last
+                                                lstTokens[2],   # Father's first
+                                                lstTokens[3])   # Father's last
         else:
-            print ("setparents: invalid parameters (try help setparents)")
+            print ("setfather: invalid parameters (try help setfather)")
         
         return
 
-    # end do_setparents()
+    # end do_setfather()
+
+    # ------------------------------------------------------------
+    # Sets the mother for a person
+    # ------------------------------------------------------------
+    def do_setmother(self, line):
+        """setmother <first-name> <last-name> <mothers-first> <mothers-last>
+        Sets the mother for the person with first-name <first-name> and last-name <last-name>. 
+        The mother's first-name is set to <mothers-first> and last name to <mothers-last>.
+        e.g., setmother Baby Bear Mamma Bear"""
+
+        dbgPrint(INF_DBG, "CLI.do_setmother - entry")
+
+        lstTokens = line.split()
+        if len(lstTokens) == self.dctParamCnt["setmother"]:
+            self.familyTree.family.setMother(   lstTokens[0],  # First
+                                                lstTokens[1],  # Last
+                                                lstTokens[2],  # Mother's first
+                                                lstTokens[3])  # Mother's last
+        else:
+            print ("setmother: invalid parameters (try help setmother)")
+        
+        return
+
+    # end do_setmother()
 
     # ------------------------------------------------------------
     # Shows the children for two parents (father and mother) 
@@ -374,7 +412,8 @@ class CLI(cmd.Cmd):
         self.dctParamCnt["listpeople"]      = 0     # listpeople
         self.dctParamCnt["listparentages"]  = 0     # listparentages
 
-        self.dctParamCnt["setparents"]      = 6     # setparents    first last motherfirst motherlast fatherfirst fatherlast
+        self.dctParamCnt["setfather"]       = 4     # setfather     first last fatherfirst fatherlast
+        self.dctParamCnt["setmother"]       = 4     # setmother     first last fatherfirst fatherlast
         self.dctParamCnt["removechildren"]  = 4     # removechildren motherfirst motherlast fatherfirst fatherlast 
 
         self.dctParamCnt["showperson"]      = 2     # showperson    first last
