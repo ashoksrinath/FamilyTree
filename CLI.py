@@ -15,9 +15,6 @@ class CLI(cmd.Cmd):
 
         dbgPrint(INF_DBG, "CLI.__init__ - entry")
 
-        self.dctParamCnt = dict()
-        self.seedParamsDict()
-
         self.familyTree = familyTree
 
         return
@@ -37,7 +34,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_addperson - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["addperson"]:
+        if len(lstTokens) == 4:
             self.familyTree.family.addPerson(lstTokens[0],  # First
                                              lstTokens[1],  # Last
                                              lstTokens[2],  # Gender
@@ -48,6 +45,26 @@ class CLI(cmd.Cmd):
         return
 
     # end do_addperson()
+
+    # ------------------------------------------------------------
+    # Clears all content
+    # ------------------------------------------------------------
+    def do_clearall(self, line):
+        """clearall
+        Clears all content - people, parentages, etc.
+        e.g., clearall"""
+
+        dbgPrint(INF_DBG, "CLI.do_clearall - entry")
+
+        lstTokens = line.split()
+        if len(lstTokens) != 0:
+            print ("clearall: invalid parameters (try help clearall)")
+        else:
+            self.familyTree.clearAll()
+
+        return
+
+    # end do_clearall()
 
     # ------------------------------------------------------------
     # Deletes a person from the family
@@ -61,7 +78,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_delperson - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["delperson"]:
+        if len(lstTokens) == 2:
             self.familyTree.family.delPerson(   lstTokens[0],  # First 
                                                 lstTokens[1])  # Last
         else:
@@ -76,12 +93,13 @@ class CLI(cmd.Cmd):
     # ------------------------------------------------------------
     def do_exit(self, line):
         """exit
-        Exits this application"""
+        Exits this application
+        e.g., exit"""
 
         dbgPrint(INF_DBG, "CLI.do_exit - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) != self.dctParamCnt["exit"]:
+        if len(lstTokens) != 0:
             print ("exit: invalid parameters (try help exit)")
 
         return True
@@ -99,7 +117,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_listparentages - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["listparentages"]:
+        if len(lstTokens) == 0:
             self.familyTree.family.listParentages()
         else:
             print ("listparentages: invalid parameters (try help listparentages)")
@@ -119,7 +137,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_listpeople - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["listpeople"]:
+        if len(lstTokens) == 0:
             self.familyTree.family.listPeople()
         else:
             print ("listpeople: invalid parameters (try help listpeople)")
@@ -141,7 +159,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_loadfile - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["loadfile"]:
+        if len(lstTokens) == 1:
             self.familyTree.loadFile(lstTokens[0])   # XML file
 
         return
@@ -160,7 +178,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_removechildren - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["removechildren"]:
+        if len(lstTokens) == 4:
             self.familyTree.family.removeChildren(  lstTokens[0],  # Mother's first
                                                     lstTokens[1],  # Mother's last
                                                     lstTokens[2],  # Father's first
@@ -178,10 +196,9 @@ class CLI(cmd.Cmd):
         Saves XML data for people to specified <xml-file>
         e.g., savefile familytree.xml"""
 
-        dbgPrint(INF_DBG, "CLI.do_savefile - entry")
-
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["savefile"]:
+        if len(lstTokens) == 1:
+            dbgPrint(INF_DBG, ("CLI.do_savefile - %s" % lstTokens[0]))
             self.familyTree.saveFile(lstTokens[0])   # Output XML filename
         else:
             print ("savefile: invalid parameters (try 'help savefile')")
@@ -197,9 +214,9 @@ class CLI(cmd.Cmd):
         """setbirthplc <first-name> <last-name> <city> <state> <country> <postcode>
         Sets birthplace information for a person with first-name <first-name>
         and last-name <last-name>
-        e.g., setbirthplc Baby Bear Goldieville CA USA 12345
-        If a parameter has white spaces in it, enclose the parameter within quotes.
-        e.g., setbirthplc Baby Bear "Goldie Locks" CA USA 12345
+        e.g., setbirthplc Baby Bear Goldieloque CA USA 12345
+        Parameters with white spaces must be enclose within double quotes.
+        e.g., setbirthplc Baby Bear "Goldie Loch" CA USA 12345
 
         """
 
@@ -221,7 +238,7 @@ class CLI(cmd.Cmd):
         else:
             lstTokens = line.split()
 
-        if len(lstTokens) == self.dctParamCnt["setbirthplc"]:
+        if len(lstTokens) == 6:
             self.familyTree.family.setBirthPlace( lstTokens[0],    # First-name
                                                   lstTokens[1],    # Last-name
                                                   lstTokens[2],    # City
@@ -247,7 +264,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_setbirthymd - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["setbirthymd"]:
+        if len(lstTokens) == 3:
             self.familyTree.family.setBirthYMD (lstTokens[0],   # First
                                                 lstTokens[1],   # Last
                                                 lstTokens[2])   # Birthday as YYYYMMDD
@@ -270,8 +287,8 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_setgender - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["setgender"]:
-            self.familyTree.family.setGender(  lstTokens[0],    # First
+        if len(lstTokens) == 3:
+            self.familyTree.family.setGender(   lstTokens[0],   # First
                                                 lstTokens[1],   # Last
                                                 lstTokens[2])   # Gender
         else:
@@ -293,7 +310,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_setfather - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["setfather"]:
+        if len(lstTokens) == 4:
             self.familyTree.family.setFather(   lstTokens[0],   # First
                                                 lstTokens[1],   # Last
                                                 lstTokens[2],   # Father's first
@@ -317,7 +334,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_setmother - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["setmother"]:
+        if len(lstTokens) == 4:
             self.familyTree.family.setMother(   lstTokens[0],  # First
                                                 lstTokens[1],  # Last
                                                 lstTokens[2],  # Mother's first
@@ -342,7 +359,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_showchildren - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["showchildren"]:
+        if len(lstTokens) == 4:
             self.familyTree.family.showChildren(lstTokens[0],  # Mother's first
                                                 lstTokens[1],  # Mother's last
                                                 lstTokens[2],  # Father's first
@@ -366,7 +383,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_showperson - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["showperson"]:
+        if len(lstTokens) == 2:
             self.familyTree.family.showPerson(  lstTokens[0],   # First
                                                 lstTokens[1])   # Last
         else:
@@ -387,7 +404,7 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_showtree - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) == self.dctParamCnt["showtree"]:
+        if len(lstTokens) == 0:
             self.familyTree.showTree()
         else:
             print ("showtree: invalid parameters (try help showtree)")
@@ -395,39 +412,6 @@ class CLI(cmd.Cmd):
         return
 
     # end do_showtree()
-
-    # ------------------------------------------------------------
-    # Seeds dictionary with CLI verbs and required parameter count
-    # ------------------------------------------------------------
-    def seedParamsDict(self):
-
-        dbgPrint(INF_DBG, "CLI.seedParamsDict - entry")
-
-        self.dctParamCnt["addperson"]       = 4     # addperson     first last gender birth-date
-        self.dctParamCnt["delperson"]       = 2     # delperson     first last
-
-        self.dctParamCnt["setbirthplc"]     = 6     # setbirthplc   first last city state country postcode
-        self.dctParamCnt["setbirthymd"]     = 3     # setbirthymd   first last birth-date
-
-        self.dctParamCnt["listpeople"]      = 0     # listpeople
-        self.dctParamCnt["listparentages"]  = 0     # listparentages
-
-        self.dctParamCnt["setfather"]       = 4     # setfather     first last fatherfirst fatherlast
-        self.dctParamCnt["setmother"]       = 4     # setmother     first last fatherfirst fatherlast
-        self.dctParamCnt["removechildren"]  = 4     # removechildren motherfirst motherlast fatherfirst fatherlast 
-
-        self.dctParamCnt["showperson"]      = 2     # showperson    first last
-        self.dctParamCnt["showchildren"]    = 4     # showchildren  motherfirst motherlast fatherfirst fatherlast 
-        self.dctParamCnt["showtree"]        = 0     # showtree
-
-        self.dctParamCnt["loadfile"]        = 1     # loadfile      xml-file-name
-        self.dctParamCnt["savefile"]        = 1     # savefile      xml-file-name
-
-        self.dctParamCnt["exit"]            = 0     # exit
-
-        return
-
-    # end def seedParamsDict()
 
 # end class CLI ###############################################
 

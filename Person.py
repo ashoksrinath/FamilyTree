@@ -8,18 +8,18 @@ class Person:
     # ------------------------------------------------------------
     # Initializes object
     # ------------------------------------------------------------
-    def __init__(self, sFirstName, sLastName, sGender, sBirthYMD):
+    def __init__(self, sFirst, sLast, sGender, sBirthYMD):
 
         dbgPrint(INF_DBG, ("Person[%s %s].__init__: (%s) %s" % 
-            (sFirstName, sLastName, sGender, sBirthYMD)))
+            (sFirst, sLast, sGender, sBirthYMD)))
 
         #
         # Store parameters
         #
-        self.sFirstName     = sFirstName
-        self.sLastName      = sLastName
-        self.sGender        = sGender
-        self.sBirthYMD      = sBirthYMD
+        self.sFirst     = sFirst
+        self.sLast      = sLast
+        self.sGender    = sGender
+        self.sBirthYMD  = sBirthYMD
 
         #
         # Initialize class variables
@@ -45,7 +45,7 @@ class Person:
     def getBirthPlace(self):
 
         dbgPrint(INF_DBG, ("Person[%s %s].getBirthPlace - returning %s %s %s %s" % 
-            (self.sFirstName, self.sLastName, self.sBirthCity, self.sBirthState, self.sBirthCountry, self.sBirthPostCode)))
+            (self.sFirst, self.sLast, self.sBirthCity, self.sBirthState, self.sBirthCountry, self.sBirthPostCode)))
 
         return self.sBirthCity, self.sBirthState, self.sBirthCountry, self.sBirthPostCode
 
@@ -57,11 +57,23 @@ class Person:
     def getFathersKey(self):
 
         dbgPrint(INF_DBG, ("Person[%s %s].getFathersKey - returning %s" % 
-            (self.sFirstName, self.sLastName, self.sFathersKey)))
+            (self.sFirst, self.sLast, self.sFathersKey)))
 
         return (self.sFathersKey)
 
     # end def getFathersKey()
+
+    # ------------------------------------------------------------
+    # Returns first name for person.
+    # ------------------------------------------------------------
+    def getFirst(self):
+
+        dbgPrint(INF_DBG, ("Person[%s %s].getFirst - entry" % 
+            (self.sFirst, self.sLast)))
+
+        return (self.sFirst)
+
+    # end def getFirst()
 
     # ------------------------------------------------------------
     # Returns gender for person.
@@ -69,23 +81,23 @@ class Person:
     def getGender(self):
 
         dbgPrint(INF_DBG, ("Person[%s %s].getGender - returning %s" % 
-            (self.sFirstName, self.sLastName, self.sGender)))
+            (self.sFirst, self.sLast, self.sGender)))
 
         return (self.sGender)
 
     # end def getGender()
 
     # ------------------------------------------------------------
-    # Returns key to this object (first-last)
+    # Returns last name for person.
     # ------------------------------------------------------------
-    def getKey(self):
+    def getLast(self):
 
-        dbgPrint(INF_DBG, ("Person[%s %s].getKey - returning %s" % 
-            (self.sFirstName, self.sLastName, self.sFirstName + "#" + self.sLastName)))
+        dbgPrint(INF_DBG, ("Person[%s %s].getLast - entry" % 
+            (self.sFirst, self.sLast)))
 
-        return (self.sFirstName + "#" + self.sLastName)
+        return (self.sLast)
 
-    # end def getKey()
+    # end def getLast()
 
     # ------------------------------------------------------------
     # Returns mother's key for person
@@ -93,7 +105,7 @@ class Person:
     def getMothersKey(self):
 
         dbgPrint(INF_DBG, ("Person[%s %s].getMothersKey - returning %s" % 
-            (self.sFirstName, self.sLastName, self.sMothersKey)))
+            (self.sFirst, self.sLast, self.sMothersKey)))
 
         return (self.sMothersKey)
 
@@ -106,7 +118,7 @@ class Person:
     def getPartnerKey(self):
 
         dbgPrint(INF_DBG, ("Person[%s %s].getPartnerKey - returning %s" % 
-            (self.sFirstName, self.sLastName, self.sPartnerKey)))
+            (self.sFirst, self.sLast, self.sPartnerKey)))
 
         return (self.sPartnerKey)
 
@@ -118,7 +130,7 @@ class Person:
     def setBirthPlace(self, sCity, sState, sCountry, sPostCode):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setBirthPlace - %s %s %s %s" % 
-            (self.sFirstName, self.sLastName, sCity, sState, sCountry, sPostCode)))
+            (self.sFirst, self.sLast, sCity, sState, sCountry, sPostCode)))
 
         self.sBirthCity     = sCity
         self.sBirthState    = sState
@@ -135,7 +147,7 @@ class Person:
     def setBirthYMD(self, sBirthYMD):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setBirthYMD - from %s to %s" % 
-            (self.sFirstName, self.sLastName, self.sBirthYMD, sBirthYMD)))
+            (self.sFirst, self.sLast, self.sBirthYMD, sBirthYMD)))
 
         self.sBirthYMD = sBirthYMD
 
@@ -149,7 +161,7 @@ class Person:
     def setFathersKey(self, sFathersKey):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setFathersKey - from %s to %s" %
-            (self.sFirstName, self.sLastName, self.sFathersKey, sFathersKey)))
+            (self.sFirst, self.sLast, self.sFathersKey, sFathersKey)))
 
         self.sFathersKey  = sFathersKey
 
@@ -163,7 +175,7 @@ class Person:
     def setGender(self, sGender):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setGender - from %s to %s" % 
-            (self.sFirstName, self.sLastName, self.sGender, sGender)))
+            (self.sFirst, self.sLast, self.sGender, sGender)))
 
         self.sGender = sGender
 
@@ -177,7 +189,7 @@ class Person:
     def setMothersKey(self, sMothersKey):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setsMothersKey - from %s to %s" %
-            (self.sFirstName, self.sLastName, self.sMothersKey, sMothersKey)))
+            (self.sFirst, self.sLast, self.sMothersKey, sMothersKey)))
 
         self.sMothersKey  = sMothersKey
 
@@ -192,7 +204,7 @@ class Person:
     def setPartnerKey(self, sPartnerKey):
 
         dbgPrint(INF_DBG, ("Person[%s %s].setPartnerKey - from %s to %s" %
-        (self.sFirstName, self.sLastName, self.sPartnerKey, sPartnerKey)))
+        (self.sFirst, self.sLast, self.sPartnerKey, sPartnerKey)))
 
         self.sPartnerKey  = sPartnerKey
 
@@ -205,11 +217,11 @@ class Person:
     # ------------------------------------------------------------
     def show(self, dctPeople):
 
-        dbgPrint(INF_DBG, ("Person[%s %s].show - entry" % (self.sFirstName, self.sLastName)))
+        dbgPrint(INF_DBG, ("Person[%s %s].show - entry" % (self.sFirst, self.sLast)))
 
         print("***")
-        print("First name:    %s" % self.sFirstName)
-        print("Last name:     %s" % self.sLastName)
+        print("First name:    %s" % self.sFirst)
+        print("Last name:     %s" % self.sLast)
         print("Gender:        %s" % self.sGender)
         print("Date of birth: %s" % self.sBirthYMD)
 
@@ -223,7 +235,7 @@ class Person:
         if self.sMothersKey != None:
             try:
                 mother = dctPeople[self.sMothersKey]
-                print("Mother:        %s %s" % (mother.sFirstName, mother.sLastName))
+                print("Mother:        %s %s" % (mother.sFirst, mother.sLast))
             except KeyError:
                 print("Mother:        not found")
         else:
@@ -232,7 +244,7 @@ class Person:
         if self.sFathersKey != None:
             try:
                 father = dctPeople[self.sFathersKey]
-                print("Father:        %s %s" % (father.sFirstName, father.sLastName))
+                print("Father:        %s %s" % (father.sFirst, father.sLast))
             except KeyError:
                 print("Father:        not found")
         else:
@@ -241,7 +253,7 @@ class Person:
         if self.sPartnerKey != None:
             try:
                 partner = dctPeople[self.sPartnerKey]
-                print("Partner:       %s %s" % (partner.sFirstName, partner.sLastName))
+                print("Partner:       %s %s" % (partner.sFirst, partner.sLast))
             except KeyError:
                 print("Partner:       not found")
         else:

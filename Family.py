@@ -30,12 +30,12 @@ class Family:
                 person.setGender(sGender)
                 person.setBirthYMD(sBirthYMD)
                 dbgPrint (INF_DBG, ("Family.addPerson: updated %s %s %s %s" % 
-                                    (person.sFirstName, person.sLastName, person.sGender, person.sBirthYMD)))
+                                    (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
             except KeyError:
                 person = Person(sFirst, sLast, sGender, sBirthYMD)
                 self.dctPeople[sPersonKey] = person
                 dbgPrint (INF_DBG, ("Family.addPerson: added %s %s %s %s" % 
-                                    (person.sFirstName, person.sLastName, person.sGender, person.sBirthYMD)))
+                                    (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
         else:
             print("addperson: first and last names are required (try help addperson)")
 
@@ -90,7 +90,7 @@ class Family:
 
         for sPersonKey in self.dctPeople:
             print("'%s %s' (%s), born: %s" % 
-                  (self.dctPeople[sPersonKey].sFirstName, self.dctPeople[sPersonKey].sLastName, 
+                  (self.dctPeople[sPersonKey].sFirst, self.dctPeople[sPersonKey].sLast, 
                    self.dctPeople[sPersonKey].sGender, self.dctPeople[sPersonKey].sBirthYMD))
 
         return
@@ -104,8 +104,8 @@ class Family:
 
         for sParentageKey, lstChildren in self.dctParentages.items():
             sMotherKey, sFathersKey = self.getPersonKeys(sParentageKey)
-            print("'%s %s' & '%s %s':" % (self.dctPeople[sMotherKey].sFirstName, self.dctPeople[sMotherKey].sLastName,
-                                          self.dctPeople[sFathersKey].sFirstName, self.dctPeople[sFathersKey].sLastName))
+            print("'%s %s' & '%s %s':" % (self.dctPeople[sMotherKey].sFirst, self.dctPeople[sMotherKey].sLast,
+                                          self.dctPeople[sFathersKey].sFirst, self.dctPeople[sFathersKey].sLast))
             for sPersonKey in lstChildren:
                 sFirst, sLast = self.getPersonNames(sPersonKey)
                 print ("    '%s %s'" % (sFirst, sLast))
@@ -133,26 +133,55 @@ class Family:
     # ------------------------------------------------------------
     # Creates dictionary key for parentages
     # ------------------------------------------------------------
-    def makeParentageKey(self, sMotherKey, sFathersKey):
+    def makeParentageKey2(self, sMothersKey, sFathersKey):
 
-        if (sMotherKey == None) or (sFathersKey == None):
+        if (sMothersKey == None) or (sFathersKey == None):
             return None
 
-        sParentageKey = sMotherKey.strip() + "&" + sFathersKey.strip()
+        sParentageKey = sMothersKey.strip() + "&" + sFathersKey.strip()
         if sParentageKey == "&":
             return None
 
         return sParentageKey
 
-    # end def makeParentageKey()
+    # end def makeParentageKey2()
+
+    # ------------------------------------------------------------
+    # Creates dictionary key for parentages
+    # ------------------------------------------------------------
+    def makeParentageKey4(self, sMothersFirst, sMothersLast, sFathersFirst, sFathersLast):
+
+        sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
+        sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
+        if (sMothersKey != None) and (sFathersKey != None):
+            return self.makeParentageKey2(sMothersKey, sFathersKey)
+        else:
+            return None
+
+    # end def makeParentageKey4()
+
+    # ------------------------------------------------------------
+    # Creates dictionary key for parentages
+    # ------------------------------------------------------------
+    def makeParentageKeyEx(self, person1, person2):
+
+        sParentageKey = None
+
+        if (person1.sGender == "F") and (person2.sGender == "M"):
+            sParentageKey = self.makeParentageKey4(person1.sFirst, person1.sLast, person2.sFirst, person2.sLast)
+        elif (person2.sGender == "F") and (person1.sGender == "M"):
+            sParentageKey = self.makeParentageKey4(person2.sFirst, person2.sLast, person1.sFirst, person1.sLast)
+
+        return sParentageKey
+
+    # end def makeParentageKeyEx()
 
     # -------------------------------------------------------------------
     # Removes all children of the specified parents
     # -------------------------------------------------------------------
     def removeChildren(self, sMothersFirst, sMothersLast, sFathersFirst, sFathersLast):
 
-        sParentageKey = self.makeParentageKey(self.makePersonKey(sMothersFirst, sMothersLast), 
-                                              self.makePersonKey(sFathersFirst, sFathersLast))
+        sParentageKey = self.makeParentageKey4(sMothersFirst, sMothersLast, sFathersFirst, sFathersLast)
         try:
             lstChildren = self.dctParentages[sParentageKey]
             
@@ -224,6 +253,9 @@ class Family:
                 sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
                 if sFathersKey != None:
                     person.setFathersKey(sFathersKey)
+                    sMothersKey = person.getMothersKey()
+                    if sMothersKey != None:
+                        self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
                 else:
                     print("setfather - father's first and last name required")
             except KeyError:
@@ -234,6 +266,24 @@ class Family:
         return sPersonKey
 
     # end def setFather()
+
+    # ------------------------------------------------------------
+    # Adds person to parentages dictionary
+    # ------------------------------------------------------------
+    def addToParentages(self, sPersonKey, sMothersKey, sFathersKey):
+
+        sParentageKey = self.makeParentageKey2(sMothersKey, sFathersKey)
+        try:
+            lstChildren = self.dctParentages[sParentageKey]
+        except KeyError:
+            lstChildren = list()
+            self.dctParentages[sParentageKey] = lstChildren
+
+        lstChildren.append(sPersonKey)
+
+        return sParentageKey
+
+    # end def addToParentages()
 
     # ------------------------------------------------------------
     # Sets mother for person
@@ -247,6 +297,9 @@ class Family:
                 sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
                 if sMothersKey != None:
                     person.setMothersKey(sMothersKey)
+                    sFathersKey = person.getFathersKey()
+                    if sFathersKey != None:
+                        self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
                 else:
                     print("setmother - mother's first and last name required")
             except KeyError:
@@ -257,6 +310,21 @@ class Family:
         return sPersonKey
 
     # end def setMother()
+
+    # ------------------------------------------------------------
+    # Sets partner relationships between parents
+    # ------------------------------------------------------------
+    def setPartnerKeys(self, sMothersKey, sFathersKey):
+
+        if sMothersKey in self.dctPeople:
+            self.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
+
+        if sFathersKey in self.dctPeople:
+            self.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
+
+        return
+
+    # end def setPartnerKeys()
 
     # ------------------------------------------------------------
     # Shows the children of parents based on parent names
@@ -280,13 +348,20 @@ class Family:
     # ------------------------------------------------------------
     def showChildren(self, sMothersKey, sFathersKey):
 
-        if  (sMothersKey in self.dctPeople) and (sFathersKey in self.dctPeople):
-            sParentsKey = self.makeParentageKey(sMothersKey, sFathersKey)
+        sMothersFirst, sMothersLast = self.getPersonNames(sMothersKey)
+        sFathersFirst, sFathersLast = self.getPersonNames(sFathersKey)
+
+        if (sMothersKey in self.dctPeople) and (sFathersKey in self.dctPeople):
+            sParentageKey = self.makeParentageKey2(sMothersKey, sFathersKey)
+            if sParentageKey == None:
+                dbgPrint(ERR_DBG, ("Family.showChildren: unable to form parentage key"))
+                return
+
             try:
-                dctChildren = self.dctParentages[sParentsKey]
-                for sPersonKey in dctChildren:
-                    print("'%s %s' (%s), born: %s" % (self.dctPeople[sPersonKey].sFirstName, self.dctPeople[sPersonKey].sLastName, 
-                                            self.dctPeople[sPersonKey].sGender, self.dctPeople[sPersonKey].sBirthYMD))
+                lstChildren = self.dctParentages[sParentageKey]
+                for sPersonKey in lstChildren:
+                    person = self.dctPeople[sPersonKey]
+                    print("'%s %s' (%s), born: %s" % (person.sFirst, person.sLast, person.sGender, person.sBirthYMD))
             except KeyError as noKids:
                 print("showchildren: no children found for mother '%s %s' & father '%s %s'" % 
                         (sMothersFirst, sMothersLast, sFathersFirst, sFathersLast))

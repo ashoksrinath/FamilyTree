@@ -11,6 +11,7 @@ ERR_DBG = 2
 INF_DBG = 4
 
 DBGMASK = NO_DBG
+# DBGMASK = ERR_DBG | INF_DBG
 
 def dbgPrint(nDbgLvl, sDbgMsg):
     if (nDbgLvl & DBGMASK):

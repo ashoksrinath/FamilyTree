@@ -87,12 +87,14 @@ class FamilyTree:
             sLast = dctAttribs["last"]
 
         sFathersKey = self.family.makePersonKey(sFirst, sLast)
-        if sFathersKey != None:
-            person.setFathersKey(sFathersKey)
+        if sFathersKey == None:
+            return sFathersKey
 
-            if not sFathersKey in self.family.dctPeople:
-                sGender = "M"
-                self.family.addPerson(sFirst, sLast, sGender, None)
+        person.setFathersKey(sFathersKey)
+        if not sFathersKey in self.family.dctPeople:
+            sGender = "M"
+            self.family.addPerson(sFirst, sLast, sGender, None)
+            dbgPrint(INF_DBG, ("FamilyTree.addFather: added '%s %s'" % (sFirst, sLast)))
 
         return sFathersKey
 
@@ -112,12 +114,14 @@ class FamilyTree:
             sLast = dctAttribs["last"]
 
         sMothersKey = self.family.makePersonKey(sFirst, sLast)
-        if sMothersKey != None:
-            person.setMothersKey(sMothersKey)
+        if sMothersKey == None:
+            return sMothersKey
 
-            if not sMothersKey in self.family.dctPeople:
-                sGender = "F"
-                self.family.addPerson(sFirst, sLast, sGender, None)
+        person.setMothersKey(sMothersKey)
+        if not sMothersKey in self.family.dctPeople:
+            sGender = "F"
+            self.family.addPerson(sFirst, sLast, sGender, None)
+            dbgPrint(INF_DBG, ("FamilyTree.addMother: added '%s %s'" % (sFirst, sLast)))
 
         return sMothersKey
 
@@ -145,6 +149,7 @@ class FamilyTree:
             sBirthYMD = dctAttribs["birthymd"]
 
         sPersonKey = self.family.addPerson(sFirst, sLast, sGender, sBirthYMD)
+        dbgPrint(INF_DBG, ("FamilyTree.addPerson: added '%s %s'" % (sFirst, sLast)))
 
         return sPersonKey
 
@@ -157,25 +162,25 @@ class FamilyTree:
 
         dbgPrint(INF_DBG, ("FamilyTree.addToRoots: partner keys: %s & %s" % (sPartnerKey1, sPartnerKey2)))
 
-        sParentagesKey = self.family.makeParentageKey(sPartnerKey1, sPartnerKey2)
-        if (sParentagesKey == None):
-            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: parentage key is None; returning"))
+        sParentageKey = self.family.makeParentageKey2(sPartnerKey1, sPartnerKey2)
+        if (sParentageKey == None):
+            dbgPrint(INF_ERR, ("FamilyTree.addToRoots: parentage key is None; returning"))
             return
 
         try:
-            lstChildren = self.family.dctParentages[sParentagesKey]
+            lstChildren = self.family.dctParentages[sParentageKey]
             if len(lstChildren) == 0:
                 dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no children; returning"))
                 return
         except KeyError:
-            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no parentage entry for %s; returning" % sParentagesKey))
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no parentage entry for %s; returning" % sParentageKey))
             return
 
-        if not sParentagesKey in self.lstParentRoots:
-            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: adding %s" % sParentagesKey))
-            self.lstParentRoots.append(sParentagesKey)
+        if not sParentageKey in self.lstParentRoots:
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: adding %s" % sParentageKey))
+            self.lstParentRoots.append(sParentageKey)
         else:
-            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: %s already added; returning" % sParentagesKey))
+            dbgPrint(INF_DBG, ("FamilyTree.addToRoots: %s already added; returning" % sParentageKey))
             return
 
         for sPersonKey in lstChildren:
@@ -187,6 +192,18 @@ class FamilyTree:
     # end def addToRoots()
 
     # ------------------------------------------------------------------------
+    # Clears all content
+    # ------------------------------------------------------------------------
+    def clearAll(self):
+
+        self.family.dctPeople.clear()
+        self.family.dctParentages.clear()
+
+        return
+
+    # end def clear()
+
+    # ------------------------------------------------------------------------
     # Checks all entries for referential integrity, removes unknown references
     # ------------------------------------------------------------------------
     def fixData(self):
@@ -195,32 +212,30 @@ class FamilyTree:
         # Remove partners, mothers and fathers who aren't in dctPeople
         # ------------------------------------------------------------
         for person in self.family.dctPeople.values():
-            if person.sPartnerKey != None:
-                if not person.sPartnerKey in self.family.dctPeople:
-                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown partner key '%s' for '%s %s'" %
-                        (person.sPartnerKey, person.sFirstName, person.sLastName)))
-                    person.sPartnerKey = None
+            if (person.getPartnerKey() != None) and (not person.getPartnerKey() in self.family.dctPeople):
+                dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown partner key '%s' for '%s %s'" %
+                    (person.getPartnerKey(), person.sFirst, person.sLast)))
+                person.setPartnerKey(None)
 
-            if person.sMothersKey != None:
-                if not person.sMothersKey in self.family.dctPeople:
-                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown mother's key '%s' for '%s %s'") %
-                        (person.sMothersKey, person.sFirstName, person.sLastName))
-                    person.sMothersKey = None
+            if (person.getMothersKey() != None) and (not person.getMothersKey() in self.family.dctPeople):
+                dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown mother's key '%s' for '%s %s'") %
+                    (person.getMothersKey(), person.sFirst, person.sLast))
+                person.setMothersKey(None)
 
-            if person.sFathersKey != None:
-                if not person.sFathersKey in self.family.dctPeople:
-                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown father's key '%s' for '%s %s'") %
-                        (person.sFathersKey, person.sFirstName, person.sLastName))
-                    person.sFathersKey = None
+            if (person.getFathersKey() != None) and (not person.getFathersKey() in self.family.dctPeople):
+                dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown father's key '%s' for '%s %s'") %
+                    (person.getFathersKey(), person.sFirst, person.sLast))
+                person.setFathersKey(None)
 
-        # ---------------------------------------------------------------------
-        # Remove children from dctParentages values if they aren't in dctPeople
-        # ---------------------------------------------------------------------
+        # ---------------------------------------------------------------------------
+        # Remove children from dctParentages values if their keys aren't in dctPeople
+        # ---------------------------------------------------------------------------
         for sParentsKey, lstChildren in self.family.dctParentages.items():
             bListModified = False
             for nIdx in range(0, len(lstChildren)):
                 if not lstChildren[nIdx] in self.family.dctPeople:
-                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown child '%s %s' for parent's key %s"))
+                    dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown child-key %s for parent key %s" %
+                        (lstChildren[nIdx], sParentsKey)))
                     lstChildren[nIdx] = None
                     bListModified = True
 
@@ -252,11 +267,21 @@ class FamilyTree:
     def getRoots(self):
 
         lstRoots = list()
-        for sPersonKey, person in self.family.dctPeople.items():
-            if (person.sMothersKey == None) and (person.sFathersKey == None):
-                lstRoots.append(sPersonKey)
-                dbgPrint(INF_DBG, ("Family.getRoots: Found person '%s %s' with no parents" % 
-                    (person.sFirstName, person.sLastName)))
+        for sParentageKey in self.family.dctParentages.keys():
+            sMothersKey, sFathersKey = self.family.getPersonKeys(sParentageKey)
+            try:
+                mother = self.family.dctPeople[sMothersKey]
+                father = self.family.dctPeople[sFathersKey]
+                if (mother.sMothersKey == None) and (mother.sFathersKey == None) \
+                    and (father.sMothersKey == None) and (father.sFathersKey == None):
+
+                    lstRoots.append(sParentageKey)
+                    dbgPrint(INF_DBG, ("Family.getRoots: Found people '%s %s' & '%s %s' with no parents" % 
+                        (mother.sFirst, mother.sLast, father.sFirst, father.sLast)))
+            except KeyError as expectation:
+                dbgPrint(INF_DBG, ("Family.getRoots: could not find '%s %s' or '%s %s' in dctPeople" % 
+                    (mother.sFirst, mother.sLast, father.sFirst, father.sLast)))
+                dbgPrint(INF_DBG, expectation)
 
         dbgPrint(INF_DBG, ("Family.getRoots: Returning %d roots" % len(lstRoots)))
 
@@ -279,16 +304,27 @@ class FamilyTree:
             for personInfo in personList:
                 self.processPerson(personInfo)
 
-        except FileNotFoundError:
-            print("loadfile - file '%s' not found" % sFileName)
-        except ET.ParseError as excParsing:
+        except etree.ParseError as excParsing:
             print("loadfile - error parsing file '%s'" % sFileName)
+            print(excParsing)
         except Exception as excUnhandled:
             print("loadfile - unhandled exception", excUnhandled)
 
         return
 
     # end def loadFile()
+
+    # ------------------------------------------------------------
+    # For pretty-printing
+    # ------------------------------------------------------------
+    def printSpaces(self, nLevel):
+
+        for nSpace in range (0, nLevel):
+            print ("  ", end=' ')
+
+        return
+
+    # end def printSpaces()
 
     # ------------------------------------------------------------
     # Processes person from XML
@@ -301,7 +337,7 @@ class FamilyTree:
 
         try:
             # --------------------
-            # Add person to family
+            # Add Person to Family
             # --------------------
             if personXML.tag == "person":
                 sPersonKey = self.addPerson(personXML.attrib)
@@ -309,51 +345,32 @@ class FamilyTree:
                     dbgPrint(ERR_DBG, "FamilyTree.processPerson - error, sPersonKey is None")
                     return
 
-                # ---------------------------------------
-                # Process birthplace & parents for Person
-                # ---------------------------------------
-                person = self.family.dctPeople[sPersonKey]
-                infoList = list(personXML)
-                for infoItem in infoList:
-                    if infoItem.tag == "birthplc":
-                        self.addBirthPlace(person, infoItem.attrib)
+            # ---------------------------------------
+            # Process birthplace & parents for Person
+            # ---------------------------------------
+            person = self.family.dctPeople[sPersonKey]
+            infoList = list(personXML)
+            for infoItem in infoList:
+                if infoItem.tag == "birthplc":
+                    self.addBirthPlace(person, infoItem.attrib)
 
-                    elif infoItem.tag == "father":
-                        sFathersKey = self.addFather(person, infoItem.attrib)
+                elif infoItem.tag == "father":
+                    sFathersKey = self.addFather(person, infoItem.attrib)
 
-                    elif infoItem.tag == "mother":
-                        sMothersKey = self.addMother(person, infoItem.attrib)
+                elif infoItem.tag == "mother":
+                    sMothersKey = self.addMother(person, infoItem.attrib)
 
-                    else:
-                        dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error, skipping unrecognized tag: %s" % infoItem.tag))
+                else:
+                    dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error, skipping unrecognized tag: %s" % infoItem.tag))
 
-                # end for infoItem in infoList
+            # end for infoItem in infoList
 
-                if (sMothersKey != None) and (sFathersKey != None):
-
-                    # -----------------------------------------
-                    # Set partner relationships between parents
-                    # -----------------------------------------
-                    if sMothersKey in self.family.dctPeople:
-                        self.family.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
-
-                    if sFathersKey in self.family.dctPeople:
-                        self.family.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
-
-                    # ---------------------------------
-                    # Create/update parentages register
-                    # ---------------------------------
-                    sParentageKey = self.family.makeParentageKey(sMothersKey, sFathersKey)
-                    if sParentageKey != None:
-                        try:
-                            lstChildren = self.family.dctParentages[sParentageKey]
-                        except KeyError:
-                            lstChildren = list()
-                            self.family.dctParentages[sParentageKey] = lstChildren           
-
-                        lstChildren.append(sPersonKey)
-
-                # end if (person != None) and (MothersKey != None) and (sFathersKeys != None)
+            # ----------------------------------------------------------------------------
+            # Set partner relationships between parents, add Person to parentages register
+            # ----------------------------------------------------------------------------
+            if (sMothersKey != None) and (sFathersKey != None):
+                self.family.setPartnerKeys(sMothersKey, sFathersKey)
+                self.family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
 
         except Exception as extinction:
             dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error processing: ", personXML.attrib))
@@ -382,10 +399,10 @@ class FamilyTree:
             # Create element <person>, set attributes, append it to element <people>
             # ----------------------------------------------------------------------
             e_person = etree.Element("person")
-            if person.sFirstName != None:
-                e_person.attrib["first"] = person.sFirstName
-            if person.sLastName != None:
-                e_person.attrib["last"] = person.sLastName
+            if person.sFirst != None:
+                e_person.attrib["first"] = person.sFirst
+            if person.sLast != None:
+                e_person.attrib["last"] = person.sLast
             if person.sGender != None:
                 e_person.attrib["gender"] = person.sGender
             if person.sBirthYMD != None:
@@ -455,32 +472,80 @@ class FamilyTree:
     def showTree(self):
         
         # -----------------------------------------------------------------
-        # Remove mothers, fathers and spouses with no entries in dctPeople,
-        # create list of people with no father and mother (roots)
+        # Remove mothers, fathers and spouses with no entries in dctPeople.
+        # Create list of people with no father and mother (roots)
         # -----------------------------------------------------------------
         self.fixData()      
         lstRoots = self.getRoots()     
 
         # ---------------------------------------------------------------------------
-        # Find females roots who are in the parentages dictionary with their
-        # partners, add them to the list of parent-roots
+        # Find roots who are in the parentages dictionary with their partners, show
+        # their branches
         # ---------------------------------------------------------------------------
-        self.lstParentRoots.clear()
-        for sPersonKey in lstRoots:
-            if self.family.dctPeople[sPersonKey].getGender() == "F":
-                sPartnerKey = self.family.dctPeople[sPersonKey].getPartnerKey()
-                if (sPartnerKey != None):
-                    self.addToRoots(sPersonKey, sPartnerKey)
-
-        for sParentageKey in self.lstParentRoots:
+        for sParentageKey in lstRoots:
             sPersonKey1, sPersonKey2 = self.family.getPersonKeys(sParentageKey)
-            print ("'%s %s' & '%s %s:" % 
-                (self.family.dctPeople[sPersonKey1].sFirstName, self.family.dctPeople[sPersonKey1].sLastName, 
-                 self.family.dctPeople[sPersonKey2].sFirstName, self.family.dctPeople[sPersonKey2].sLastName))
+            if self.family.dctPeople[sPersonKey1].sGender == "F":
+                mother = self.family.dctPeople[sPersonKey1]
+                father = self.family.dctPeople[sPersonKey2]
+            else:
+                mother = self.family.dctPeople[sPersonKey2]
+                father = self.family.dctPeople[sPersonKey1]
+
+            print ("'%s %s' & '%s %s':" % 
+                (mother.sFirst, mother.sLast, father.sFirst, father.sLast))
+
+            lstChildren = self.family.dctParentages[sParentageKey]
+            self.showBranch(lstChildren, 1)
 
         return
 
     # end def showTree()
+
+    # ------------------------------------------------------------
+    # Shows all descendants of one root in the family tree
+    # ------------------------------------------------------------
+    def showBranch(self, lstChildren, nLevel):
+
+        for sPersonKey in lstChildren:
+
+            mother = None
+            father = None
+
+            person = self.family.dctPeople[sPersonKey]
+            sFirst  = person.getFirst()
+            sLast   = person.getLast()
+            sGender = person.getGender()
+            
+            self.printSpaces(nLevel)
+            print ("Child: '%s %s' (%s)" % (sFirst, sLast, sGender))
+
+            if sGender == "F":
+                mother = self.family.dctPeople[sPersonKey]
+                sPartnerKey = mother.getPartnerKey()
+                if sPartnerKey != None:
+                    father = self.family.dctPeople[sPartnerKey]
+            elif sGender == "M":
+                father = self.family.dctPeople[sPersonKey]
+                sPartnerKey = father.getPartnerKey()
+                if sPartnerKey != None:
+                    mother = self.family.dctPeople[sPartnerKey]
+
+            if (mother != None) and (father != None):
+                self.printSpaces(nLevel)
+                print ("'%s %s' & '%s %s'" % (mother.sFirst, mother.sLast, father.sFirst, father.sLast))
+                sParentageKey = self.family.makeParentageKey4(mother.sFirst, mother.sLast, father.sFirst, father.sLast)
+                if sParentageKey != None:
+                    try:
+                        lstChildren2 = self.family.dctParentages[sParentageKey]
+                        self.showBranch(lstChildren2, nLevel+1)
+                    except KeyError:
+                        pass
+
+        # end for
+
+        return
+
+    # end def showBranch()
 
 # end class FamilyTree ########################################
 
