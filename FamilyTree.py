@@ -212,19 +212,22 @@ class FamilyTree:
         # Remove partners, mothers and fathers who aren't in dctPeople
         # ------------------------------------------------------------
         for person in self.family.dctPeople.values():
-            if (person.getPartnerKey() != None) and (not person.getPartnerKey() in self.family.dctPeople):
+            sPartnerKey = person.getPartnerKey()
+            if (sPartnerKey != None) and (not sPartnerKey in self.family.dctPeople):
                 dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown partner key '%s' for '%s %s'" %
-                    (person.getPartnerKey(), person.sFirst, person.sLast)))
+                    (sPartnerKey, person.sFirst, person.sLast)))
                 person.setPartnerKey(None)
 
-            if (person.getMothersKey() != None) and (not person.getMothersKey() in self.family.dctPeople):
+            sMothersKey = person.getMothersKey()
+            if (sMothersKey != None) and (not sMothersKey in self.family.dctPeople):
                 dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown mother's key '%s' for '%s %s'") %
-                    (person.getMothersKey(), person.sFirst, person.sLast))
+                    (sMothersKey, person.sFirst, person.sLast))
                 person.setMothersKey(None)
 
-            if (person.getFathersKey() != None) and (not person.getFathersKey() in self.family.dctPeople):
+            sFathersKey = person.getFathersKey()
+            if (sFathersKey != None) and (not sFathersKey in self.family.dctPeople):
                 dbgPrint(INF_DBG, ("FamilyTree.fixData: removing unknown father's key '%s' for '%s %s'") %
-                    (person.getFathersKey(), person.sFirst, person.sLast))
+                    (sFathersKey, person.sFirst, person.sLast))
                 person.setFathersKey(None)
 
         # ---------------------------------------------------------------------------
@@ -294,7 +297,6 @@ class FamilyTree:
     # ------------------------------------------------------------
     def loadFile(self, sFileName):
 
-        print("Loading file '%s'... " % sFileName)
         try:
             parser = etree.XMLParser(remove_blank_text=True)
             pplTree = etree.parse(sFileName, parser)

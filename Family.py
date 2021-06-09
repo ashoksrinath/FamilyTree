@@ -24,24 +24,60 @@ class Family:
     def addPerson(self, sFirst, sLast, sGender, sBirthYMD):
 
         sPersonKey = self.makePersonKey(sFirst, sLast)
-        if sPersonKey != None:
-            try:
-                person = self.dctPeople[sPersonKey]
-                person.setGender(sGender)
-                person.setBirthYMD(sBirthYMD)
-                dbgPrint (INF_DBG, ("Family.addPerson: updated %s %s %s %s" % 
-                                    (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
-            except KeyError:
-                person = Person(sFirst, sLast, sGender, sBirthYMD)
-                self.dctPeople[sPersonKey] = person
-                dbgPrint (INF_DBG, ("Family.addPerson: added %s %s %s %s" % 
-                                    (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
-        else:
+        if sPersonKey == None:
             print("addperson: first and last names are required (try help addperson)")
+            return None
+
+        if sPersonKey in self.dctPeople:
+            person = self.dctPeople[sPersonKey]
+            person.setGender(sGender)
+            person.setBirthYMD(sBirthYMD)
+            dbgPrint (INF_DBG, ("Family.addPerson: updated %s %s %s %s" % 
+                                (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
+        else:
+            person = Person(sFirst, sLast, sGender, sBirthYMD)
+            self.dctPeople[sPersonKey] = person
+            dbgPrint (INF_DBG, ("Family.addPerson: added %s %s %s %s" % 
+                                (person.sFirst, person.sLast, person.sGender, person.sBirthYMD)))
 
         return sPersonKey
 
     # end def addPerson()
+
+    # ------------------------------------------------------------
+    # Adds person to parentages dictionary
+    # ------------------------------------------------------------
+    def addToParentages(self, sPersonKey, sMothersKey, sFathersKey):
+
+        try:
+            mother = self.dctPeople[sMothersKey]
+        except KeyError:
+            dbgPrint(ERR_DBG, ("Family.addToParentages - error %s not found in dctPeople" % sMothersKey))
+            return None
+
+        try:
+            father = self.dctPeople[sFathersKey]
+        except KeyError:
+            dbgPrint(ERR_DBG, ("Family.addToParentages - error %s not found in dctPeople" % sFathersKey))
+            return None
+
+        sParentageKey = self.makeParentageKey2(sMothersKey, sFathersKey)
+        if sParentageKey == None:
+            return None
+
+        mother.setPartnerKey(sFathersKey)
+        father.setPartnerKey(sMothersKey)
+        if sParentageKey in self.dctParentages:
+            lstChildren = self.dctParentages[sParentageKey]
+        else:
+            lstChildren = list()
+            self.dctParentages[sParentageKey] = lstChildren
+
+        lstChildren.append(sPersonKey)
+
+        return sParentageKey
+
+    # end def addToParentages()
 
     # ------------------------------------------------------------
     # Removes person from family
@@ -49,13 +85,31 @@ class Family:
     def delPerson(self, sFirst, sLast):
 
         sPersonKey = self.makePersonKey(sFirst, sLast)
-        if sPersonKey != None:
-            try:
-                del self.dctPeople[self.makePersonKey(sFirst, sLast)]
-            except KeyError as noPersonErr:
-                print("delperson: '%s %s' not found" % (sFirst, sLast))
-        else:
+        if sPersonKey == None:
             print("delperson: first and last names are required (try help delperson)")
+            return
+
+        if sPersonKey not in self.dctPeople:
+            print("delperson: '%s %s' not found" % (sFirst, sLast))
+            return
+
+        person = self.dctPeople[sPersonKey]
+
+        sMothersKey = person.getMothersKey()
+        sFathersKey = person.getFathersKey()
+        if (sMothersKey != None) and (sFathersKey != None):
+            sParentageKey = self.makeParentageKey2(sMothersKey, sFathersKey)
+            if (sParentageKey != None):
+                try:
+                    lstChildren = self.dctParentages[sParentageKey]
+                    if sPersonKey in lstChildren:
+                        lstChildren.remove(sPersonKey)
+                        if len(lstChildren) == 0:
+                            del self.dctParentages[sParentageKey]
+                except KeyError:
+                    pass
+
+        del self.dctPeople[sPersonKey]
 
         return
 
@@ -190,13 +244,11 @@ class Family:
             # --------------------------------------------------
             while len(lstChildren) > 0:
                 sPersonKey = lstChildren.pop()
-                try:
-                    person = self.dctPeople[sPersonKey]
-                    person.setMothersKey(None)
-                    person.setFathersKey(None)
-                except KeyError:
-                    sFirst, sLast = self.getPersonNames(sPersonKey)
-                    print("removechildren: person '%s %s' not found" % (sFirst, sLast))
+                if sPersonKey in self.dctPeople:
+                    self.dctPeople[sPersonKey].setMothersKey(None)
+                    self.dctPeople[sPersonKey].setFathersKey(None)
+                else:
+                    dbgPrint(ERR_DBG, ("Family.removeChildren - error sPersonKey %s not found" % sPersonKey))
 
             # -------------------------------
             # Delete the parentage dictionary
@@ -246,66 +298,68 @@ class Family:
     # ------------------------------------------------------------
     def setFather(self, sFirst, sLast, sFathersFirst, sFathersLast):
 
+        sPersonKey  = None
+        sFathersKey = None
+
         sPersonKey = self.makePersonKey(sFirst, sLast)
-        if sPersonKey != None:
-            try:
-                person = self.dctPeople[sPersonKey]
-                sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
-                if sFathersKey != None:
-                    person.setFathersKey(sFathersKey)
-                    sMothersKey = person.getMothersKey()
-                    if sMothersKey != None:
-                        self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
-                else:
-                    print("setfather - father's first and last name required")
-            except KeyError:
-                print("setfather - person '%s %s' not found" % (sFirst, sLast))
-        else:
+        if sPersonKey == None:
             print("setfather - person's first and last name required")
+            return None
+
+        sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
+        if sFathersKey == None:
+            print("setfather - father's first and last name required")
+            return None
+
+        if not sPersonKey in self.dctPeople:
+            print("setfather - person '%s %s' not found" % (sFirst, sLast))
+            return None
+
+        if not sFathersKey in self.dctPeople:
+            print("setfather - father '%s %s' not found" % (sFathersFirst, sFathersLast))
+            return None
+
+        person = self.dctPeople[sPersonKey]
+        person.setFathersKey(sFathersKey)
+        sMothersKey = person.getMothersKey()
+        if sMothersKey != None:
+            self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
 
         return sPersonKey
 
     # end def setFather()
 
     # ------------------------------------------------------------
-    # Adds person to parentages dictionary
-    # ------------------------------------------------------------
-    def addToParentages(self, sPersonKey, sMothersKey, sFathersKey):
-
-        sParentageKey = self.makeParentageKey2(sMothersKey, sFathersKey)
-        try:
-            lstChildren = self.dctParentages[sParentageKey]
-        except KeyError:
-            lstChildren = list()
-            self.dctParentages[sParentageKey] = lstChildren
-
-        lstChildren.append(sPersonKey)
-
-        return sParentageKey
-
-    # end def addToParentages()
-
-    # ------------------------------------------------------------
     # Sets mother for person
     # ------------------------------------------------------------
     def setMother(self, sFirst, sLast, sMothersFirst, sMothersLast):
 
+        sPersonKey  = None
+        sMothersKey = None
+
         sPersonKey = self.makePersonKey(sFirst, sLast)
-        if sPersonKey != None:
-            try:
-                person = self.dctPeople[sPersonKey]
-                sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
-                if sMothersKey != None:
-                    person.setMothersKey(sMothersKey)
-                    sFathersKey = person.getFathersKey()
-                    if sFathersKey != None:
-                        self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
-                else:
-                    print("setmother - mother's first and last name required")
-            except KeyError:
-                print("setmother - person '%s %s' not found" % (sFirst, sLast))
-        else:
+        if sPersonKey == None:
             print("setmother - person's first and last name required")
+            return None
+
+        sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
+        if sMothersKey == None:
+            print("setmother - mother's first and last name required")
+            return None
+
+        if not sPersonKey in self.dctPeople:
+            print("setmother - person '%s %s' not found" % (sFirst, sLast))
+            return None
+
+        if not sMothersKey in self.dctPeople:
+            print("setmother - father '%s %s' not found" % (sMothersFirst, sMothersLast))
+            return None
+
+        person = self.dctPeople[sPersonKey]
+        person.setMothersKey(sMothersKey)
+        sFathersKey = person.getFathersKey()
+        if sFathersKey != None:
+            self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
 
         return sPersonKey
 
