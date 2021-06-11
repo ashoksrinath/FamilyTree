@@ -368,17 +368,30 @@ class Family:
     # ------------------------------------------------------------
     # Sets partner relationships between parents
     # ------------------------------------------------------------
-    def setPartnerKeys(self, sMothersKey, sFathersKey):
+    def setPartners(self, sMothersFirst, sMothersLast, sFathersFirst, sFathersLast):
+
+        sMothersKey = self.makePersonKey(sMothersFirst, sMothersLast)
+        sFathersKey = self.makePersonKey(sFathersFirst, sFathersLast)
+        if (sMothersKey == None) or (sFathersKey == None):
+            print("setpartners: mother's and father's first and last names must be specified")
+            return
 
         if sMothersKey in self.dctPeople:
             self.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
+        else:
+            print("setpartners: '%s %s' not known" %s (sMothersFirst, sMothersLast))
+            return
 
         if sFathersKey in self.dctPeople:
             self.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
+        else:
+            print("setpartners: '%s %s' not known" %s (sFathersFirst, sFathersLast))
+            return
+
 
         return
 
-    # end def setPartnerKeys()
+    # end def setPartners()
 
     # ------------------------------------------------------------
     # Shows the children of parents based on parent names

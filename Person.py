@@ -198,8 +198,8 @@ class Person:
     # end def setsMothersKey()
 
     # ------------------------------------------------------------
-    # Sets partner (with whom to beget children) for person. Only
-    # one partner per person at this time.
+    # Sets key for partner (with whom to beget children) for person.
+    # Only one partner per person is supported at this time.
     # ------------------------------------------------------------
     def setPartnerKey(self, sPartnerKey):
 
@@ -210,7 +210,7 @@ class Person:
 
         return
 
-    # end def setPartner()
+    # end def setPartnerKey()
 
     # ------------------------------------------------------------
     # Prints all details of a person

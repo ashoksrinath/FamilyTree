@@ -345,7 +345,7 @@ class FamilyTree:
                 sPersonKey = self.addPerson(personXML.attrib)
                 if sPersonKey == None:
                     dbgPrint(ERR_DBG, "FamilyTree.processPerson - error, sPersonKey is None")
-                    return
+                    return False
 
             # ---------------------------------------
             # Process birthplace & parents for Person
@@ -371,14 +371,14 @@ class FamilyTree:
             # Set partner relationships between parents, add Person to parentages register
             # ----------------------------------------------------------------------------
             if (sMothersKey != None) and (sFathersKey != None):
-                self.family.setPartnerKeys(sMothersKey, sFathersKey)
                 self.family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
 
         except Exception as extinction:
             dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error processing: ", personXML.attrib))
             dbgPrint(ERR_DBG, ("FamilyTree.processPerson - unhandled exception: ", extinction))
+            return False
 
-        return
+        return True
 
     # end def processPerson()
 

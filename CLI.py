@@ -276,29 +276,6 @@ class CLI(cmd.Cmd):
     # end do_setbirthymd()
 
     # ------------------------------------------------------------
-    # Sets the gender for a person
-    # ------------------------------------------------------------
-    def do_setgender(self, line):
-        """setgender <first-name> <last-name> <gender>
-        Sets gender for a person with first-name <first-name> and 
-        last-name <last-name> to <gender>, which must be 'M' or 'F'
-        e.g., setgender Baby Bear M"""
-
-        dbgPrint(INF_DBG, "CLI.do_setgender - entry")
-
-        lstTokens = line.split()
-        if len(lstTokens) == 3:
-            self.familyTree.family.setGender(   lstTokens[0],   # First
-                                                lstTokens[1],   # Last
-                                                lstTokens[2])   # Gender
-        else:
-            print ("setgender: invalid parameters (try help setgender)")
-        
-        return
-
-    # end do_setgender()
-
-    # ------------------------------------------------------------
     # Sets the father for a person
     # ------------------------------------------------------------
     def do_setfather(self, line):
@@ -323,6 +300,29 @@ class CLI(cmd.Cmd):
     # end do_setfather()
 
     # ------------------------------------------------------------
+    # Sets the gender for a person
+    # ------------------------------------------------------------
+    def do_setgender(self, line):
+        """setgender <first-name> <last-name> <gender>
+        Sets gender for a person with first-name <first-name> and 
+        last-name <last-name> to <gender>, which must be 'M' or 'F'
+        e.g., setgender Baby Bear M"""
+
+        dbgPrint(INF_DBG, "CLI.do_setgender - entry")
+
+        lstTokens = line.split()
+        if len(lstTokens) == 3:
+            self.familyTree.family.setGender(   lstTokens[0],   # First
+                                                lstTokens[1],   # Last
+                                                lstTokens[2])   # Gender
+        else:
+            print ("setgender: invalid parameters (try help setgender)")
+        
+        return
+
+    # end do_setgender()
+
+    # ------------------------------------------------------------
     # Sets the mother for a person
     # ------------------------------------------------------------
     def do_setmother(self, line):
@@ -345,6 +345,31 @@ class CLI(cmd.Cmd):
         return
 
     # end do_setmother()
+
+    # ------------------------------------------------------------
+    # Sets a partnering relationship between two people
+    # ------------------------------------------------------------
+    def do_setpartners(self, line):
+        """setpartners <mothers-first> <mothers-last> <fathers-first> <fathers-last>
+        Sets a partnering relationship between a woman with first-name <mothers-last>
+         and last-name <mothers-last> and a man with first-name <fathers-last> and 
+        last-name <fathers-last>
+        e.g., setpartners Mamma Bear Papa Bear"""
+
+        dbgPrint(INF_DBG, "CLI.do_setpartners - entry")
+
+        lstTokens = line.split()
+        if len(lstTokens) == 4:
+            self.familyTree.family.setPartners( lstTokens[0],  # Mother's first
+                                                lstTokens[1],  # Mother's last
+                                                lstTokens[2],  # Father's first
+                                                lstTokens[3])  # Father's last
+        else:
+            print ("setpartners: invalid parameters (try help setpartners)")
+        
+        return
+
+    # end do_setpartners()
 
     # ------------------------------------------------------------
     # Shows the children for two parents (father and mother) 
