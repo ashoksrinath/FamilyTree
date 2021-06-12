@@ -1,7 +1,7 @@
 import os
 import sys
-from   lxml import etree
-from   enum import Enum
+import threading
+
 from   CLI import CLI
 from   Family import Family
 from   Utils import *
@@ -11,149 +11,22 @@ from   Utils import *
 # MAIN ROUTINE
 # -------------------------------------------------------------
 # Usage:
-#   python3 FamilyTree <people.xml>
+#   python3 FamilyTree.py
 #   where: 
-#       people.xml = file containing details of people in XML format:
-#       <people>
-#           <person first="first-name" last="last-name" gender="M|F" birthymd="YYYYMMDD">
-#               <mother first="mothers-first" last="mothers-last" />
-#               <father first="fathers-first" last="fathers-last" />
-#               <birthplace city="city-name" state="state-name" country="country-name" postcode="postcode" />
-#           </person>
-#           ...
-#           <person>
-#               ...
-#           </person>
-#           ...
-#       </people>
 #
 
 class FamilyTree:
     # ------------------------------------------------------------
     # Initializes object
     # ------------------------------------------------------------
-    def __init__(self, sPeopleFile):
+    def __init__(self):
  
         self.family         = Family()
         self.lstParentRoots = list()
 
-        if sPeopleFile != None:
-            self.loadFile(sPeopleFile)
-
-        self.getInput()
-
         return
 
     # end def __init__()
-
-    # ------------------------------------------------------------
-    # Processes birth-place information for a person
-    # ------------------------------------------------------------
-    def addBirthPlace(self, person, dctBirthPlc):
-
-        sCity = None
-        if "city" in dctBirthPlc:
-            sCity = dctBirthPlc["city"]
-
-        sState = None
-        if "state" in dctBirthPlc:
-            sState = dctBirthPlc["state"]
-
-        sPostCode = None
-        if "postcode" in dctBirthPlc:
-            sPostCode = dctBirthPlc["postcode"]
-
-        sCountry = None
-        if "country" in dctBirthPlc:
-            sCountry = dctBirthPlc["country"]
-
-        person.setBirthPlace(sCity, sState, sCountry, sPostCode)
-
-        return
-
-    # end def addBirthPlace()
-
-    # ------------------------------------------------------------
-    # Processes father's information for a person
-    # ------------------------------------------------------------
-    def addFather(self, person, dctAttribs):
-
-        sFirst = None
-        if "first" in dctAttribs:
-            sFirst = dctAttribs["first"]
-
-        sLast = None
-        if "last" in dctAttribs:
-            sLast = dctAttribs["last"]
-
-        sFathersKey = self.family.makePersonKey(sFirst, sLast)
-        if sFathersKey == None:
-            return sFathersKey
-
-        person.setFathersKey(sFathersKey)
-        if not sFathersKey in self.family.dctPeople:
-            sGender = "M"
-            self.family.addPerson(sFirst, sLast, sGender, None)
-            dbgPrint(INF_DBG, ("FamilyTree.addFather: added '%s %s'" % (sFirst, sLast)))
-
-        return sFathersKey
-
-    # end def addFather()
-
-    # ------------------------------------------------------------
-    # Processes mother's information for a person
-    # ------------------------------------------------------------
-    def addMother(self, person, dctAttribs):
-
-        sFirst = None
-        if "first" in dctAttribs:
-            sFirst = dctAttribs["first"]
-
-        sLast = None
-        if "last" in dctAttribs:
-            sLast = dctAttribs["last"]
-
-        sMothersKey = self.family.makePersonKey(sFirst, sLast)
-        if sMothersKey == None:
-            return sMothersKey
-
-        person.setMothersKey(sMothersKey)
-        if not sMothersKey in self.family.dctPeople:
-            sGender = "F"
-            self.family.addPerson(sFirst, sLast, sGender, None)
-            dbgPrint(INF_DBG, ("FamilyTree.addMother: added '%s %s'" % (sFirst, sLast)))
-
-        return sMothersKey
-
-    # end def addMother()
-
-    # ------------------------------------------------------------
-    # Processes information for a person
-    # ------------------------------------------------------------
-    def addPerson(self, dctAttribs):
-
-        sFirst = None
-        if "first" in dctAttribs:
-            sFirst = dctAttribs["first"]
-
-        sLast = None
-        if "last" in dctAttribs:
-            sLast = dctAttribs["last"]
-
-        sGender = None
-        if "gender" in dctAttribs:
-            sGender = dctAttribs["gender"]
-
-        sBirthYMD = None
-        if "birthymd" in dctAttribs:
-            sBirthYMD = dctAttribs["birthymd"]
-
-        sPersonKey = self.family.addPerson(sFirst, sLast, sGender, sBirthYMD)
-        dbgPrint(INF_DBG, ("FamilyTree.addPerson: added '%s %s'" % (sFirst, sLast)))
-
-        return sPersonKey
-
-    # end def addPerson()
 
     # ------------------------------------------------------------
     # Adds parents to the family tree display list
@@ -191,17 +64,17 @@ class FamilyTree:
 
     # end def addToRoots()
 
-    # ------------------------------------------------------------------------
-    # Clears all content
-    # ------------------------------------------------------------------------
-    def clearAll(self):
+    # ------------------------------------------------------------
+    # Gets and processes input from the command-line
+    # ------------------------------------------------------------
+    def cmdProcessor(self):
 
-        self.family.dctPeople.clear()
-        self.family.dctParentages.clear()
+        cli = CLI(self)
+        cli.cmdloop()
 
         return
 
-    # end def clear()
+    # end def cmdProcessor()
 
     # ------------------------------------------------------------------------
     # Checks all entries for referential integrity, removes unknown references
@@ -253,18 +126,6 @@ class FamilyTree:
     # end def fixData()
 
     # ------------------------------------------------------------
-    # Gets user-input from the command-line
-    # ------------------------------------------------------------
-    def getInput(self):
-
-        cli = CLI(self)
-        cli.cmdloop()
-
-        return
-
-    # end def getInput()
-
-    # ------------------------------------------------------------
     # Finds and returns a list of "roots" in the family tree
     # ------------------------------------------------------------
     def getRoots(self):
@@ -293,180 +154,19 @@ class FamilyTree:
     # end def getRoots()
 
     # ------------------------------------------------------------
-    # Loads people from XML data file
-    # ------------------------------------------------------------
-    def loadFile(self, sFileName):
-
-        try:
-            parser = etree.XMLParser(remove_blank_text=True)
-            pplTree = etree.parse(sFileName, parser)
-
-            pplRoot = pplTree.getroot()
-            personList = list(pplRoot)
-            for personInfo in personList:
-                self.processPerson(personInfo)
-
-        except etree.ParseError as excParsing:
-            print("loadfile - error parsing file '%s'" % sFileName)
-            print(excParsing)
-        except Exception as excUnhandled:
-            print("loadfile - unhandled exception", excUnhandled)
-
-        return
-
-    # end def loadFile()
-
-    # ------------------------------------------------------------
     # For pretty-printing
     # ------------------------------------------------------------
-    def printSpaces(self, nLevel):
+    def printSpaces(self, nLevel, bDash = False):
 
-        for nSpace in range (0, nLevel):
-            print ("  ", end=' ')
+        nSpaces = nLevel * 2
+        for nSpace in range (0, nSpaces-1):
+            print (" ", end=' ')
+
+        print ("-", end=' ') if bDash else print (" ", end=' ')
 
         return
 
     # end def printSpaces()
-
-    # ------------------------------------------------------------
-    # Processes person from XML
-    # ------------------------------------------------------------
-    def processPerson(self, personXML):
-
-        person      = None
-        sMothersKey = None
-        sFathersKey = None
-
-        try:
-            # --------------------
-            # Add Person to Family
-            # --------------------
-            if personXML.tag == "person":
-                sPersonKey = self.addPerson(personXML.attrib)
-                if sPersonKey == None:
-                    dbgPrint(ERR_DBG, "FamilyTree.processPerson - error, sPersonKey is None")
-                    return False
-
-            # ---------------------------------------
-            # Process birthplace & parents for Person
-            # ---------------------------------------
-            person = self.family.dctPeople[sPersonKey]
-            infoList = list(personXML)
-            for infoItem in infoList:
-                if infoItem.tag == "birthplc":
-                    self.addBirthPlace(person, infoItem.attrib)
-
-                elif infoItem.tag == "father":
-                    sFathersKey = self.addFather(person, infoItem.attrib)
-
-                elif infoItem.tag == "mother":
-                    sMothersKey = self.addMother(person, infoItem.attrib)
-
-                else:
-                    dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error, skipping unrecognized tag: %s" % infoItem.tag))
-
-            # end for infoItem in infoList
-
-            # ----------------------------------------------------------------------------
-            # Set partner relationships between parents, add Person to parentages register
-            # ----------------------------------------------------------------------------
-            if (sMothersKey != None) and (sFathersKey != None):
-                self.family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
-
-        except Exception as extinction:
-            dbgPrint(ERR_DBG, ("FamilyTree.processPerson - error processing: ", personXML.attrib))
-            dbgPrint(ERR_DBG, ("FamilyTree.processPerson - unhandled exception: ", extinction))
-            return False
-
-        return True
-
-    # end def processPerson()
-
-    # ------------------------------------------------------------
-    # Saves people data to file in XML format
-    # ------------------------------------------------------------
-    def saveFile(self, sXMLfileName):
-
-        # --------------------------------
-        # Create root element <parentages>
-        # --------------------------------
-        e_people = etree.Element("people")
-
-        # -----------------
-        # For all people...
-        # -----------------
-        for sPersonKey, person in self.family.dctPeople.items():
-
-            # ----------------------------------------------------------------------
-            # Create element <person>, set attributes, append it to element <people>
-            # ----------------------------------------------------------------------
-            e_person = etree.Element("person")
-            if person.sFirst != None:
-                e_person.attrib["first"] = person.sFirst
-            if person.sLast != None:
-                e_person.attrib["last"] = person.sLast
-            if person.sGender != None:
-                e_person.attrib["gender"] = person.sGender
-            if person.sBirthYMD != None:
-                e_person.attrib["birthymd"] = person.sBirthYMD
-            e_people.append(e_person)
-
-            # -------------------------------------------------------------------------
-            # Create subelement <father>, set attributes, append it to element <person>
-            # -------------------------------------------------------------------------
-            sFathersKey = person.getFathersKey()
-            if sFathersKey != None:
-                sFirst, sLast = self.family.getPersonNames(sFathersKey)
-                if (sFirst != None) or (sLast != None):
-                    e_father = etree.Element("father")
-                    if sFirst != None:
-                        e_father.attrib["first"] = sFirst
-                    if sLast != None:
-                        e_father.attrib["last"] = sLast
-                    e_person.append(e_father)
-
-            # -------------------------------------------------------------------------
-            # Create subelement <mother>, set attributes, append it to element <person>
-            # -------------------------------------------------------------------------
-            sMothersKey = person.getMothersKey()
-            if sMothersKey != None:
-                sFirst, sLast = self.family.getPersonNames(sMothersKey)
-                if (sFirst != None) or (sLast != None):
-                    e_mother = etree.Element("mother")
-                    if sFirst != None:
-                        e_mother.attrib["first"] = sFirst
-                    if sLast != None:
-                        e_mother.attrib["last"]  = sLast
-                    e_person.append(e_mother)
-
-            # -------------------------------------------------------------------------
-            # Create subelement <birthplc>, set attributes, append it to element <person>
-            # -------------------------------------------------------------------------
-            sBirthCity, sBirthState, sBirthCountry, sBirthPostCode = person.getBirthPlace()
-            if (sBirthCity != None) or (sBirthState != None) or (sBirthCountry != None) or (sBirthPostCode != None):
-                e_birthplc = etree.Element("birthplc")
-                if sBirthCity != None:
-                    e_birthplc.attrib["city"] = sBirthCity
-                if sBirthState != None:
-                    e_birthplc.attrib["state"] = sBirthState
-                if sBirthCountry != None:
-                    e_birthplc.attrib["country"] = sBirthCountry
-                if sBirthPostCode != None:
-                    e_birthplc.attrib["postcode"] = sBirthPostCode
-                e_person.append(e_birthplc)
-
-        # end for sPersonKey in self.family.dctPeople
-
-        # ---------------------------------
-        # Create XML tree, write it to file
-        # ---------------------------------
-        et_people = etree.ElementTree(e_people)
-        with open(sXMLfileName, "wb") as fhOutputfile:
-            et_people.write(fhOutputfile, encoding='utf-8', pretty_print=True, xml_declaration=True)
-
-        return
-
-    # end saveFile()
 
     # ------------------------------------------------------------
     # Shows the family tree
@@ -477,7 +177,7 @@ class FamilyTree:
         # Remove mothers, fathers and spouses with no entries in dctPeople.
         # Create list of people with no father and mother (roots)
         # -----------------------------------------------------------------
-        self.fixData()      
+        self.family.fixData()      
         lstRoots = self.getRoots()     
 
         # ---------------------------------------------------------------------------
@@ -518,7 +218,7 @@ class FamilyTree:
             sLast   = person.getLast()
             sGender = person.getGender()
             
-            self.printSpaces(nLevel)
+            self.printSpaces(nLevel, True)
             print ("Child: '%s %s' (%s)" % (sFirst, sLast, sGender))
 
             if sGender == "F":
@@ -534,7 +234,7 @@ class FamilyTree:
 
             if (mother != None) and (father != None):
                 self.printSpaces(nLevel)
-                print ("'%s %s' & '%s %s'" % (mother.sFirst, mother.sLast, father.sFirst, father.sLast))
+                print ("'%s %s' & '%s %s':" % (mother.sFirst, mother.sLast, father.sFirst, father.sLast))
                 sParentageKey = self.family.makeParentageKey4(mother.sFirst, mother.sLast, father.sFirst, father.sLast)
                 if sParentageKey != None:
                     try:
@@ -549,32 +249,56 @@ class FamilyTree:
 
     # end def showBranch()
 
+    # ------------------------------------------------------------
+    # Gets and processes input from socket connections
+    # ------------------------------------------------------------
+    def sockProcessor(self, nServerPort):
+
+        self.sockit = Sockit(host="localhost", port=nServerPort)
+
+        return
+
+    # end def sockProcessor()
+
 # end class FamilyTree ########################################
 
 
 if __name__ == "__main__":
     #
-    # Initialize file-names
+    # Initialize port number
     #
-    sPeopleFile = None
+    nServerPort = None
+
+    def print_n_sprint(sAppName):
+        print("Usage: python3 %s [server-port]" % sAppName)
+        print("       runs interactively on the command-line unless server-port is specified, in which case it")
+        print("       runs in the background, accepting connections on server-port.  The server receives commands")
+        print("       per the CLI syntax on these connections, and returns responses as formatted strings.")
+        pause ("Press return to end")
+        sys.exit ()
+
 
     #
     # Process command-line arguments
     #
     if len(sys.argv) <= 2:
         if len(sys.argv) == 2:
-            sPeopleFile = sys.argv[1]
+            try:
+                nServerPort = int(sys.argv[1])
+            except ValueError:
+                print_n_sprint(sys.argv[0])
     else:
-        print("Usage: python3 %s [file-name]" % sys.argv[0])
-        print("       where file-name contains XML data about people")
-        pause ("Press return to end")
-        sys.exit ()
+        print_n_sprint(sys.argv[0])
 
     try:
         #
-        # Create Family-tree instance; pass it the people file-name
+        # Create Family-tree instance
         #
-        familyTree = FamilyTree(sPeopleFile)
+        familyTree = FamilyTree()
+        if nServerPort == None:
+            familyTree.cmdProcessor()
+        else:
+            familyTree.sockProcessor(nServerPort)
 
     except KeyboardInterrupt:
         print("Thank you for climbing down the tree")

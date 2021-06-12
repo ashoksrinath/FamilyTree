@@ -29,7 +29,11 @@
     <Compile Include="Family.py" />
     <Compile Include="FamilyTree.py" />
     <Compile Include="Person.py" />
+    <Compile Include="Sockit.py" />
     <Compile Include="Utils.py" />
+    <Compile Include="XMLParser.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="README.md" />

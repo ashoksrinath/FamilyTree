@@ -79,6 +79,18 @@ class Family:
 
     # end def addToParentages()
 
+    # ------------------------------------------------------------------------
+    # Clears all content
+    # ------------------------------------------------------------------------
+    def clearAll(self):
+
+        self.dctPeople.clear()
+        self.dctParentages.clear()
+
+        return
+
+    # end def clearAll()
+
     # ------------------------------------------------------------
     # Removes person from family
     # ------------------------------------------------------------
@@ -114,6 +126,55 @@ class Family:
         return
 
     # end def delPerson()
+
+    # ------------------------------------------------------------------------
+    # Checks all entries for referential integrity, removes unknown references
+    # ------------------------------------------------------------------------
+    def fixData(self):
+
+        # ------------------------------------------------------------
+        # Remove partners, mothers and fathers who aren't in dctPeople
+        # ------------------------------------------------------------
+        for person in self.dctPeople.values():
+            sPartnerKey = person.getPartnerKey()
+            if (sPartnerKey != None) and (not sPartnerKey in self.dctPeople):
+                dbgPrint(INF_DBG, ("Family.fixData: removing unknown partner key '%s' for '%s %s'" %
+                    (sPartnerKey, person.sFirst, person.sLast)))
+                person.setPartnerKey(None)
+
+            sMothersKey = person.getMothersKey()
+            if (sMothersKey != None) and (not sMothersKey in self.dctPeople):
+                dbgPrint(INF_DBG, ("Family.fixData: removing unknown mother's key '%s' for '%s %s'") %
+                    (sMothersKey, person.sFirst, person.sLast))
+                person.setMothersKey(None)
+
+            sFathersKey = person.getFathersKey()
+            if (sFathersKey != None) and (not sFathersKey in self.dctPeople):
+                dbgPrint(INF_DBG, ("Family.fixData: removing unknown father's key '%s' for '%s %s'") %
+                    (sFathersKey, person.sFirst, person.sLast))
+                person.setFathersKey(None)
+
+        # ---------------------------------------------------------------------------
+        # Remove children from dctParentages values if their keys aren't in dctPeople
+        # ---------------------------------------------------------------------------
+        for sParentsKey, lstChildren in self.dctParentages.items():
+            bListModified = False
+            for nIdx in range(0, len(lstChildren)):
+                if not lstChildren[nIdx] in self.dctPeople:
+                    dbgPrint(INF_DBG, ("Family.fixData: removing unknown child-key %s for parent key %s" %
+                        (lstChildren[nIdx], sParentsKey)))
+                    lstChildren[nIdx] = None
+                    bListModified = True
+
+            if bListModified:
+                self.dctParents[sParentsKey] = list()
+                for nIdx in range(0, len(lstChildren)):
+                    if lstChildren[nIdx] != None:
+                        self.dctParents[sParentsKey].append(lstChildren[nIdx])
+
+        return
+
+    # end def fixData()
 
     # ------------------------------------------------------------
     # Extracts and returns the person-keys from a parents-key
