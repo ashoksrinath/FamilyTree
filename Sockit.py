@@ -1,11 +1,6 @@
-# CIS 41B
-# DeAnza College, Winter 2020
-# Ashok Srinath
-# -----
 import socket
 import sys
-
-DEBUG = False
+from   Utils import *
 
 class Sockit(object):
     """General purpose socket client/server class """
@@ -38,14 +33,14 @@ class Sockit(object):
     # ***************************
     def accept(self):
 
-        if self.sock != None:
-            self.newsock, self.newaddr = self.sock.accept()
-
-            sockit = Sockit (sock=self.newsock, addr=self.newaddr)
-            return sockit
-        elif DEBUG:
-            print("Sockit.accept - socket address not constructed")
+        if self.sock == None:
+            dbgPrint(ERR_DBG, "Sockit.accept - invalid server socket")
             return None
+
+        self.newsock, self.newaddr = self.sock.accept()
+        sockit = Sockit (sock=self.newsock, addr=self.newaddr)
+
+        return sockit
 
     # end accept()
 
@@ -60,12 +55,13 @@ class Sockit(object):
         try:
             self.sock.bind(self.tplAddr)
             self.sock.listen(self.nBACKLOG)
-            if DEBUG:
-                print("Sockit.bind - listening for connection-requests on {}:{}".format(*self.tplAddr))
-        except Exception as exEcution:
-            print("Sockit.bind - error", exEcution)
 
-        return
+            dbgPrint(INF_DBG, ("Sockit.bind - listening for connection-requests on %d:%d" % \
+                (self.tplAddr[0], self.tplAddr[1])))
+            return(True)
+        except Exception as exEcution:
+            dbgPrint(ERR_DBG, ("Sockit.bind - exception %s" % repr(exEcution)))
+            return(False)
 
     # end bind()
 
@@ -74,18 +70,16 @@ class Sockit(object):
     # ************************
     def close(self):
 
-        if self.sock:
-            try:
-                self.sock.close()
-                if DEBUG:
-                    print("Sockit.close - success")
-            except Exception as exEcution:
-                print("Sockit.close - error", exEcution)
+        if not self.sock:
+            return True
 
-        elif DEBUG:
-            print("Sockit.close - nothing to close")
-
-        return
+        try:
+            self.sock.close()
+            dbgPrint(INF_DBG, "Sockit.close - success")
+            return True
+        except Exception as exEcution:
+            dbgPrint(ERR_DBG, ("Sockit.close - exception %s" % repr(exEcution)))
+            return False
 
     # end close()
 
@@ -99,13 +93,12 @@ class Sockit(object):
 
         try:
             self.sock.connect(self.tplAddr)
-            if DEBUG:
-                print("Sockit.connect - connected to {}:{}".format(*self.tplAddr))
+            dbgPrint(INF_DBG, ("Sockit.connect - connected to %d:%d" % \
+                (self.tplAddr[0], self.tplAddr[1])))
             return True
         except Exception as exEcution:
-            print("Sockit.connect - error", exEcution)
-
-        return False
+            dbgPrint(ERR_DBG, ("Sockit.connect - exception %s" % repr(exEcution)))
+            return False
 
     # end connect()
 
@@ -116,12 +109,11 @@ class Sockit(object):
 
         try:
             self.sock = socket.socket()
-            if DEBUG:
-                print("Sockit.create - success")
+            dbgPrint(INF_DBG, "Sockit.create - success")
+            return True
         except Exception as exEcution:
-            print("Sockit.create - error", exEcution)
-           
-        return
+            dbgPrint(ERR_DBG, ("Sockit.create - exception %s" % repr(exEcution)))
+            return False
 
     # end create()
 
@@ -133,32 +125,29 @@ class Sockit(object):
         sBuff = ""
 
         if self.sock == None:
-            print("Sockit.recv - invalid socket")
+            dbgPrint(ERR_DBG, "Sockit.recv - invalid socket")
             return sBuff
-        elif DEBUG:
-            print("Sockit.recv - starting to receive")
 
+        dbgPrint(INF_DBG, "Sockit.recv - starting to receive")
         try:
             rMsgSize = self.sock.recv(self.nPRFXLEN)
             if rMsgSize:
                 sMsgSize = rMsgSize.decode()
                 try:
                     nMsgSize = int(sMsgSize)
-                    if DEBUG:
-                        print("Sockit.recv - message size is %d" % (nMsgSize))
+                    dbgPrint(INF_DBG, ("Sockit.recv - message size is %d" % (nMsgSize)))
                     rBuff = self.sock.recv(nMsgSize)
                     if rBuff:
                         sBuff = rBuff.decode()
-                        if DEBUG:
-                            print("Sockit.recv - received message")
-                    elif DEBUG:
-                        print("Sockit.recv - failed to read message")
+                        dbgPrint(INF_DBG, "Sockit.recv - received message")
+                    else:
+                        dbgPrint(ERR_DBG, "Sockit.recv - failed to receive message")
                 except ValueError:
-                    print("Sockit.recv - failed to convert message-size %d into integer" % (sMsgSize))
+                    dbgPrint(ERR_DBG, ("Sockit.recv - failed to convert message-size %s into integer" % (sMsgSize)))
             elif DEBUG:
-                print("Sockit.recv - failed to read message size")
+                dbgPrint(ERR_DBG, "Sockit.recv - failed to read message size")
         except Exception as exEcution:
-            print("Sockit.recv - error", exEcution)
+            dbgPrint(ERR_DBG, ("Sockit.recv - unhandled exception %s" % repr(exEcution)))
 
 
         return sBuff
@@ -174,18 +163,17 @@ class Sockit(object):
         if self.sock != None:
             try:
                 sMsgSize = str(len(sBuff)).zfill(self.nPRFXLEN)
-                if DEBUG:
-                    print("Sockit.send - sending data-size", sMsgSize)
+                dbgPrint(INF_DBG, ("Sockit.send - sending data-size %s" % sMsgSize))
                 self.sock.sendall(sMsgSize.encode())
-                if DEBUG:
-                    print("Sockit.send - sending data")
+
+                dbgPrint(INF_DBG, "Sockit.send - sending data")
                 self.sock.sendall(sBuff.encode())
                 return True
             except Exception as exEcution:
-                print("Sockit.send - error", exEcution)
+                dbgPrint(ERR_DBG, ("Sockit.send - unhandled exception %s" % repr(exEcution)))
                 return False
         else:
-            print("Sockit.send - invalid socket")
+            dbgPrint(ERR_DBG, "Sockit.send - invalid socket")
             return False
 
     # end send()

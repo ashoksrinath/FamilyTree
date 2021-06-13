@@ -19,6 +19,8 @@ class XMLParser(object):
     # ------------------------------------------------------------
     def proc_father(self, family, person, dctAttribs):
 
+        bSuccess = False
+
         sFirst = None
         if "first" in dctAttribs:
             sFirst = dctAttribs["first"]
@@ -29,16 +31,18 @@ class XMLParser(object):
 
         sFathersKey = family.makePersonKey(sFirst, sLast)
         if sFathersKey == None:
-            return sFathersKey
+            return False, sFathersKey
 
         if not sFathersKey in family.dctPeople:
-            sGender = "M"
-            family.addPerson(sFirst, sLast, sGender, None)
-            dbgPrint(INF_DBG, ("XMLParser.proc_father: added '%s %s'" % (sFirst, sLast)))
+            bSuccess, sPersonKey, sError = family.addPerson(sFirst, sLast, "M", None)
+            if bSuccess:
+                dbgPrint(INF_DBG, ("XMLParser.proc_father: added '%s %s'" % (sFirst, sLast)))
+                person.setFathersKey(sFathersKey)
+            else:
+                dbgPrint(ERR_DBG, ("XMLParser.proc_father: error '%s'" % (sResponse)))
 
-        person.setFathersKey(sFathersKey)
 
-        return sFathersKey
+        return bSuccess, sFathersKey
 
     # end def proc_father()
 
@@ -46,6 +50,8 @@ class XMLParser(object):
     # Processes mother's information for a person
     # ------------------------------------------------------------
     def proc_mother(self, family, person, dctAttribs):
+
+        bSuccess = False
 
         sFirst = None
         if "first" in dctAttribs:
@@ -57,23 +63,30 @@ class XMLParser(object):
 
         sMothersKey = family.makePersonKey(sFirst, sLast)
         if sMothersKey == None:
-            return sMothersKey
+            return bSuccess, sMothersKey
 
         if not sMothersKey in family.dctPeople:
-            sGender = "F"
-            family.addPerson(sFirst, sLast, sGender, None)
-            dbgPrint(INF_DBG, ("XMLParser.proc_mother: added '%s %s'" % (sFirst, sLast)))
+            bSuccess, sPersonKey, sError = family.addPerson(sFirst, sLast, "F", None)
+            if bSuccess:
+                dbgPrint(INF_DBG, ("XMLParser.proc_mother: added '%s %s'" % (sFirst, sLast)))
+            else:
+                dbgPrint(ERR_DBG, ("XMLParser.proc_mother: error '%s'" % (sResponse)))
 
         person.setMothersKey(sMothersKey)
 
-        return sMothersKey
+        return True, sMothersKey
 
     # end def proc_mother()
 
     # ------------------------------------------------------------
-    # Processes information for a person
+    # Processes attributes for a person.  Returns a tuple of (bool, 
+    # success-string, error-string), with the success string set to
+    # the person-key
     # ------------------------------------------------------------
     def proc_person(self, family, dctAttribs):
+
+        sError      = ""
+        bSuccess    = True
 
         sFirst = None
         if "first" in dctAttribs:
@@ -91,10 +104,14 @@ class XMLParser(object):
         if "birthymd" in dctAttribs:
             sBirthYMD = dctAttribs["birthymd"]
 
-        sPersonKey = family.addPerson(sFirst, sLast, sGender, sBirthYMD)
-        dbgPrint(INF_DBG, ("XMLParser.proc_person: added '%s %s'" % (sFirst, sLast)))
+        if (sFirst != None) and (sLast != None) and (sGender != None):
+            bSuccess, sPersonKey, sError = family.addPerson(sFirst, sLast, sGender, sBirthYMD)
+            if bSuccess:
+                dbgPrint(INF_DBG, ("XMLParser.proc_person: added '%s %s'" % (sFirst, sLast)))
+        else:
+            sError = ("loadfile: person's first-name, last-name and gender are required\n")
 
-        return sPersonKey
+        return(bSuccess, sPersonKey, sError)
 
     # end def proc_person()
 
@@ -102,6 +119,9 @@ class XMLParser(object):
     # Loads people from XML data file
     # ------------------------------------------------------------
     def loadFile(self, sFileName, family):
+
+        sReturnBuff = ""
+        bSuccess    = True
 
         try:
             parser = etree.XMLParser(remove_blank_text=True)
@@ -113,12 +133,20 @@ class XMLParser(object):
                 self.processPersonXml(family, personXml)
 
         except etree.ParseError as excParsing:
-            print("XMLParser.loadFile - error parsing file '%s'" % sFileName)
-            print(excParsing)
+            bSuccess = False
+            sLine = ("XMLParser.loadFile - error parsing file '%s'" % sFileName)
+            sReturnBuff += sLine
+            sReturnBuff += repr(excParsing)
         except Exception as excUnhandled:
-            print("XMLParser.loadFile - unhandled exception", excUnhandled)
+            bSuccess = False
+            sLine = ("XMLParser.loadFile - unhandled exception ")
+            sLine += repr(excUnhandled)
+            sReturnBuff += sLine
 
-        return
+        if bSuccess:
+            return(bSuccess, "OK\n", None)
+        else:
+            return(bSuccess, None, sReturnBuff)
 
     # end def loadFile()
 
@@ -143,10 +171,10 @@ class XMLParser(object):
         if "country" in dctBirthPlc:
             sCountry = dctBirthPlc["country"]
 
-        person.setBirthPlace(sCity, sState, sCountry, sPostCode)
+        bStatus = person.setBirthPlace(sCity, sState, sCountry, sPostCode)
         dbgPrint(INF_DBG, ("XMLParser.proc_birthplc: set '%s %s %s %s'" % (sCity, sState, sCountry, sPostCode)))
 
-        return
+        return(bStatus)
 
     # end def proc_birthplc()
 
@@ -156,17 +184,20 @@ class XMLParser(object):
     def processPersonXml(self, family, personXML):
 
         person      = None
+        sPersonKey  = ""
+        sError      = ""
         sMothersKey = None
         sFathersKey = None
+        bSuccess    = False
 
         try:
             # --------------------
             # Add Person to Family
             # --------------------
             if personXML.tag == "person":
-                sPersonKey = self.proc_person(family, personXML.attrib)
-                if sPersonKey == None:
-                    dbgPrint(ERR_DBG, "XMLParser.processPersonXml - error, sPersonKey is None")
+                bSuccess, sPersonKey, sError = self.proc_person(family, personXML.attrib)
+                if not bSuccess:
+                    dbgPrint(ERR_DBG, sResponse)
                     return False
 
             # ---------------------------------------
@@ -176,13 +207,13 @@ class XMLParser(object):
             infoList = list(personXML)
             for infoItem in infoList:
                 if infoItem.tag == "birthplc":
-                    self.proc_birthplc(family, person, infoItem.attrib)
+                    bSuccess = self.proc_birthplc(family, person, infoItem.attrib)
 
                 elif infoItem.tag == "father":
-                    sFathersKey = self.proc_father(family, person, infoItem.attrib)
+                    bSuccess, sFathersKey = self.proc_father(family, person, infoItem.attrib)
 
                 elif infoItem.tag == "mother":
-                    sMothersKey = self.proc_mother(family, person, infoItem.attrib)
+                    bSuccess, sMothersKey = self.proc_mother(family, person, infoItem.attrib)
 
                 else:
                     dbgPrint(ERR_DBG, ("XMLParser.processPersonXml - error, skipping unrecognized tag: %s" % infoItem.tag))
@@ -193,7 +224,7 @@ class XMLParser(object):
             # Set partner relationships between parents, add Person to parentages register
             # ----------------------------------------------------------------------------
             if (sMothersKey != None) and (sFathersKey != None):
-                family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
+                bSuccess = family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
 
         except Exception as extinction:
             dbgPrint(ERR_DBG, ("XMLParser.processPersonXml - error processing: ", personXML.attrib))

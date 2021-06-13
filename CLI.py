@@ -10,14 +10,13 @@ class CLI(cmd.Cmd):
     # ------------------------------------------------------------
     # Initializes object
     # ------------------------------------------------------------
-    def __init__(self, familyTree):
+    def __init__(self, family):
 
         super(CLI, self).__init__()
 
         dbgPrint(INF_DBG, "CLI.__init__ - entry")
 
-        self.familyTree = familyTree
-        self.family     = familyTree.family
+        self.family = family
 
         return
 
@@ -37,10 +36,12 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.addPerson(  lstTokens[0],  # First
-                                    lstTokens[1],  # Last
-                                    lstTokens[2],  # Gender
-                                    lstTokens[3])  # BirthYMD
+            bSuccess, sPersonKey, sError = self.family.addPerson(lstTokens[0],  # First
+                                                                lstTokens[1],   # Last
+                                                                lstTokens[2],   # Gender
+                                                                lstTokens[3])   # BirthYMD
+            if not bSuccess:
+                print(sError, end='')
         else:
             print ("addperson: invalid parameters (try help addperson)")
         
@@ -59,10 +60,10 @@ class CLI(cmd.Cmd):
         dbgPrint(INF_DBG, "CLI.do_clearall - entry")
 
         lstTokens = line.split()
-        if len(lstTokens) != 0:
-            print ("clearall: invalid parameters (try help clearall)")
+        if len(lstTokens) == 0:
+            bSuccess, sSuccess, sFailure = self.family.clearAll()
         else:
-            self.family.clearAll()
+            print ("clearall: invalid parameters (try help clearall)")
 
         return
 
@@ -81,8 +82,9 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 2:
-            self.family.delPerson(  lstTokens[0],  # First 
-                                    lstTokens[1])  # Last
+            bSuccess, sSuccess, sFailure = self.family.delPerson(lstTokens[0],  # First 
+                                                                lstTokens[1])   # Last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("delperson: invalid parameters (try 'help delperson')")
               
@@ -120,7 +122,8 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 0:
-            self.family.listParentages()
+            bSuccess, sSuccess, sFailure = self.family.listParentages()
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("listparentages: invalid parameters (try help listparentages)")
         
@@ -140,7 +143,8 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 0:
-            self.family.listPeople()
+            sResult = self.family.listPeople()
+            print(sResult)
         else:
             print ("listpeople: invalid parameters (try help listpeople)")
         
@@ -163,8 +167,11 @@ class CLI(cmd.Cmd):
         lstTokens = line.split()
         if len(lstTokens) == 1:
             xmlParser = XMLParser()
-            xmlParser.loadFile(lstTokens[0],  # XML file 
-                               self.family)   # Family instance to populate from XML file
+            bSuccess, sSuccess, sFailure = xmlParser.loadFile(  lstTokens[0],  # XML file 
+                                                                self.family)   # Family instance to populate from XML file
+            print(sSuccess) if bSuccess else print(sFailure)
+        else:
+            print ("loadfile: invalid parameters (try help loadfile)")
 
         return
 
@@ -183,10 +190,11 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.removeChildren( lstTokens[0],  # Mother's first
-                                        lstTokens[1],  # Mother's last
-                                        lstTokens[2],  # Father's first
-                                        lstTokens[3])  # Father's last
+            bSuccess, sSuccess, sFailure = self.family.removeChildren(  lstTokens[0],  # Mother's first
+                                                                        lstTokens[1],  # Mother's last
+                                                                        lstTokens[2],  # Father's first
+                                                                        lstTokens[3])  # Father's last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("removechildren: invalid parameters (try help removechildren)")
 
@@ -204,12 +212,11 @@ class CLI(cmd.Cmd):
         if len(lstTokens) == 1:
             dbgPrint(INF_DBG, ("CLI.do_savefile - %s" % lstTokens[0]))
             xmlParser = XMLParser()
-            xmlParser.saveFile(lstTokens[0],  # Output XML filename
-                               self.family)   # Family instance to populate from XML file
+            bSuccess, sSuccess, sFailure = xmlParser.saveFile(  lstTokens[0],  # Output XML filename
+                                                                self.family)   # Family instance to populate from XML file
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("savefile: invalid parameters (try 'help savefile')")
-
-
 
         return
 
@@ -247,12 +254,13 @@ class CLI(cmd.Cmd):
             lstTokens = line.split()
 
         if len(lstTokens) == 6:
-            self.family.setBirthPlace(  lstTokens[0],    # First-name
-                                        lstTokens[1],    # Last-name
-                                        lstTokens[2],    # City
-                                        lstTokens[3],    # State
-                                        lstTokens[4],    # Country
-                                        lstTokens[5])    # Postal code
+            bSuccess, sSuccess, sFailure = self.family.setBirthPlace(lstTokens[0],   # First-name
+                                                                    lstTokens[1],    # Last-name
+                                                                    lstTokens[2],    # City
+                                                                    lstTokens[3],    # State
+                                                                    lstTokens[4],    # Country
+                                                                    lstTokens[5])    # Postal code
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("setbirthplc: invalid parameters (try 'help setbirthplc')")
         
@@ -273,9 +281,10 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 3:
-            self.family.setBirthYMD (lstTokens[0],  # First
-                                    lstTokens[1],   # Last
-                                    lstTokens[2])   # Birthday as YYYYMMDD
+            bSuccess, sSuccess, sFailure = self.family.setBirthYMD (lstTokens[0],  # First
+                                                                    lstTokens[1],   # Last
+                                                                    lstTokens[2])   # Birthday as YYYYMMDD
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("setbirthymd: invalid parameters (try help setbirthymd)")
         
@@ -296,10 +305,11 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.setFather(  lstTokens[0],   # First
-                                    lstTokens[1],   # Last
-                                    lstTokens[2],   # Father's first
-                                    lstTokens[3])   # Father's last
+            bSuccess, sSuccess, sFailure = self.family.setFather(lstTokens[0],  # First
+                                                                lstTokens[1],   # Last
+                                                                lstTokens[2],   # Father's first
+                                                                lstTokens[3])   # Father's last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("setfather: invalid parameters (try help setfather)")
         
@@ -320,9 +330,10 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 3:
-            self.family.setGender(  lstTokens[0],   # First
-                                    lstTokens[1],   # Last
-                                    lstTokens[2])   # Gender
+            bSuccess, sSuccess, sFailure = self.family.setGender(lstTokens[0],   # First
+                                                                lstTokens[1],   # Last
+                                                                lstTokens[2])   # Gender
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("setgender: invalid parameters (try help setgender)")
         
@@ -343,10 +354,11 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.setMother(  lstTokens[0],  # First
-                                    lstTokens[1],  # Last
-                                    lstTokens[2],  # Mother's first
-                                    lstTokens[3])  # Mother's last
+            bSuccess, sSuccess, sFailure = self.family.setMother(lstTokens[0],  # First
+                                                                lstTokens[1],  # Last
+                                                                lstTokens[2],  # Mother's first
+                                                                lstTokens[3])  # Mother's last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
             print ("setmother: invalid parameters (try help setmother)")
         
@@ -368,12 +380,13 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.setPartners(lstTokens[0],  # Mother's first
-                                    lstTokens[1],  # Mother's last
-                                    lstTokens[2],  # Father's first
-                                    lstTokens[3])  # Father's last
+            bSuccess, sSuccess, sFailure = self.family.setPartners( lstTokens[0],  # Mother's first
+                                                                    lstTokens[1],  # Mother's last
+                                                                    lstTokens[2],  # Father's first
+                                                                    lstTokens[3])  # Father's last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
-            print ("setpartners: invalid parameters (try help setpartners)")
+            print("setpartners: invalid parameters (try help setpartners)")
         
         return
 
@@ -393,12 +406,13 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 4:
-            self.family.showChildren(lstTokens[0], # Mother's first
-                                    lstTokens[1],  # Mother's last
-                                    lstTokens[2],  # Father's first
-                                    lstTokens[3])  # Father's last
+            bSuccess, sSuccess, sFailure = self.family.showChildren(lstTokens[0],  # Mother's first
+                                                                    lstTokens[1],  # Mother's last
+                                                                    lstTokens[2],  # Father's first
+                                                                    lstTokens[3])  # Father's last
+            print(sSuccess) if bSuccess else print(sFailure)
         else:
-            print ("showchildren: invalid parameters (try help showchildren)")
+            print("showchildren: invalid parameters (try help showchildren)")
         
         return
 
@@ -417,8 +431,9 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 2:
-            self.family.showPerson( lstTokens[0],   # First
-                                    lstTokens[1])   # Last
+            sResult = self.family.showPerson(lstTokens[0],  # First
+                                            lstTokens[1])   # Last
+            print(sResult, end='')
         else:
             print ("showperson: invalid parameters (try help showperson)")
         
@@ -438,7 +453,8 @@ class CLI(cmd.Cmd):
 
         lstTokens = line.split()
         if len(lstTokens) == 0:
-            self.familyTree.showTree()
+            sResult = self.family.showTree()
+            print(sResult)
         else:
             print ("showtree: invalid parameters (try help showtree)")
         
