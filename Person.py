@@ -88,6 +88,31 @@ class Person:
     # end def getGender()
 
     # ------------------------------------------------------------
+    # Returns all details of a person
+    # ------------------------------------------------------------
+    def getInfo(self):
+
+        sReturnBuff = ""
+
+        dbgPrint(INF_DBG, ("Person.getInfo[%s %s] - entry" % (self.sFirst, self.sLast)))
+
+        sReturnBuff += ("First name:    %s\n" % self.sFirst)
+        sReturnBuff += ("Last name:     %s\n" % self.sLast)
+        sReturnBuff += ("Gender:        %s\n" % self.sGender)
+        sReturnBuff += ("Date of birth: %s\n" % self.sBirthYMD)
+
+        sReturnBuff += ("---\n")
+
+        sReturnBuff += ("City:          %s\n" % self.sBirthCity)
+        sReturnBuff += ("State:         %s\n" % self.sBirthState)
+        sReturnBuff += ("Country:       %s\n" % self.sBirthCountry)
+        sReturnBuff += ("Postal Code:   %s\n" % self.sBirthPostCode)
+
+        return sReturnBuff
+
+    # end def getInfo()
+
+    # ------------------------------------------------------------
     # Returns last name for person.
     # ------------------------------------------------------------
     def getLast(self):
@@ -211,59 +236,6 @@ class Person:
         return True
 
     # end def setPartnerKey()
-
-    # ------------------------------------------------------------
-    # Prints all details of a person
-    # ------------------------------------------------------------
-    def show(self, dctPeople):
-
-        sReturnBuff = ""
-
-        dbgPrint(INF_DBG, ("Person.show[%s %s] - entry" % (self.sFirst, self.sLast)))
-
-        sReturnBuff += "***\n"
-        sReturnBuff += ("First name:    %s\n" % self.sFirst)
-        sReturnBuff += ("Last name:     %s\n" % self.sLast)
-        sReturnBuff += ("Gender:        %s\n" % self.sGender)
-        sReturnBuff += ("Date of birth: %s\n" % self.sBirthYMD)
-
-        sReturnBuff += ("---\n")
-        sReturnBuff += ("City:          %s\n" % self.sBirthCity)
-        sReturnBuff += ("State:         %s\n" % self.sBirthState)
-        sReturnBuff += ("Country:       %s\n" % self.sBirthCountry)
-        sReturnBuff += ("Postal Code:   %s\n" % self.sBirthPostCode)
-
-        sReturnBuff += ("---\n")
-        if self.sMothersKey != None:
-            try:
-                mother = dctPeople[self.sMothersKey]
-                sReturnBuff += ("Mother:        %s %s\n" % (mother.sFirst, mother.sLast))
-            except KeyError:
-                sReturnBuff += ("Mother:        not found\n")
-        else:
-            sReturnBuff += ("Mother:        not known\n")
-
-        if self.sFathersKey != None:
-            try:
-                father = dctPeople[self.sFathersKey]
-                sReturnBuff += ("Father:        %s %s\n" % (father.sFirst, father.sLast))
-            except KeyError:
-                sReturnBuff += ("Father:        not found\n")
-        else:
-            sReturnBuff += ("Father:        not known\n")
-
-        if self.sPartnerKey != None:
-            try:
-                partner = dctPeople[self.sPartnerKey]
-                sReturnBuff += ("Partner:       %s %s\n" % (partner.sFirst, partner.sLast))
-            except KeyError:
-                sReturnBuff += ("Partner:       not found\n")
-        else:
-            sReturnBuff += ("Partner:       not known\n")
-
-        return sReturnBuff
-
-    # end def show()
 
 # end class Person ############################################
 

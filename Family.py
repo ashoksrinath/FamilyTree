@@ -270,23 +270,6 @@ class Family:
     # end def _getRoots()
 
     # ------------------------------------------------------------
-    # Lists all people in the family
-    # ------------------------------------------------------------
-    def listPeople(self):
-
-        sResultBuff = ""
-
-        for sPersonKey in self.dctPeople:
-            sLine = ("'%s %s' (%s), born: %s\n" % 
-                      (self.dctPeople[sPersonKey].sFirst, self.dctPeople[sPersonKey].sLast, 
-                       self.dctPeople[sPersonKey].sGender, self.dctPeople[sPersonKey].sBirthYMD))
-            sResultBuff += sLine
-
-        return(sResultBuff)
-
-    # end def listPeople()
-
-    # ------------------------------------------------------------
     # Lists all parentages in the family
     # ------------------------------------------------------------
     def listParentages(self):
@@ -306,6 +289,23 @@ class Family:
         return(True, sResultBuff, None)
 
     # end def listParentages()
+
+    # ------------------------------------------------------------
+    # Lists all people in the family
+    # ------------------------------------------------------------
+    def listPeople(self):
+
+        sResultBuff = ""
+
+        for sPersonKey in self.dctPeople:
+            sLine = ("'%s %s' (%s), born: %s\n" % 
+                      (self.dctPeople[sPersonKey].sFirst, self.dctPeople[sPersonKey].sLast, 
+                       self.dctPeople[sPersonKey].sGender, self.dctPeople[sPersonKey].sBirthYMD))
+            sResultBuff += sLine
+
+        return(sResultBuff)
+
+    # end def listPeople()
 
     # ------------------------------------------------------------
     # Creates dictionary key for a person
@@ -639,7 +639,36 @@ class Family:
         if sPersonKey != None:
             try:
                 person = self.dctPeople[sPersonKey]
-                sReturnBuff = person.show(self.dctPeople)
+                sReturnBuff += "****\n"
+                sReturnBuff += person.getInfo()
+                if person.sMothersKey != None:
+                    try:
+                        mother = self.dctPeople[person.sMothersKey]
+                        sReturnBuff += ("Mother:        %s %s\n" % (mother.sFirst, mother.sLast))
+                    except KeyError:
+                        sReturnBuff += ("Mother:        not found\n")
+                else:
+                    sReturnBuff += ("Mother:        not known\n")
+
+                if person.sFathersKey != None:
+                    try:
+                        father = self.dctPeople[person.sFathersKey]
+                        sReturnBuff += ("Father:        %s %s\n" % (father.sFirst, father.sLast))
+                    except KeyError:
+                        sReturnBuff += ("Father:        not found\n")
+                else:
+                    sReturnBuff += ("Father:        not known\n")
+
+                if person.sPartnerKey != None:
+                    try:
+                        partner = self.dctPeople[person.sPartnerKey]
+                        sReturnBuff += ("Partner:       %s %s\n" % (partner.sFirst, partner.sLast))
+                    except KeyError:
+                        sReturnBuff += ("Partner:       not found\n")
+                else:
+                    sReturnBuff += ("Partner:       not known\n")
+
+                sReturnBuff += "****\n"
             except KeyError:
                 sReturnBuff += "showperson: '%s %s' not found\n" % (sFirst, sLast)
         else:
