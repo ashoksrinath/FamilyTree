@@ -52,6 +52,18 @@ class Person:
     # end def getBirthPlace()
 
     # ------------------------------------------------------------
+    # Accessor for birth date of person
+    # ------------------------------------------------------------
+    def getBirthYMD(self):
+
+        dbgPrint(INF_DBG, ("Person.getBirthYMD[%s %s] - returning %s" % 
+            (self.sFirst, self.sLast, self.birthYMD)))
+
+        return self.birthYMD
+
+    # end def getBirthYMD()
+
+     # ------------------------------------------------------------
     # Returns father's key for person
     # ------------------------------------------------------------
     def getFathersKey(self):
@@ -209,7 +221,7 @@ class Person:
     # end def setGender()
 
     # ------------------------------------------------------------
-    # Sets parents for person
+    # Sets mother's key for person
     # ------------------------------------------------------------
     def setMothersKey(self, sMothersKey):
 

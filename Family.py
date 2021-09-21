@@ -12,7 +12,7 @@ class Family:
     def __init__(self):
  
         self.dctPeople      = dict()
-        self.dctParentages  = dict()
+        self.dctPartnerships  = dict()
         self.lstParentRoots = list()
 
         return
@@ -50,20 +50,20 @@ class Family:
     # end def addPerson()
 
     # ------------------------------------------------------------
-    # Adds person to parentages dictionary
+    # Adds person to children of partners
     # ------------------------------------------------------------
-    def addToParentages(self, sPersonKey, sMothersKey, sFathersKey):
+    def addChildren(self, sPersonKey, sMothersKey, sFathersKey):
 
         try:
             mother = self.dctPeople[sMothersKey]
         except KeyError:
-            dbgPrint(ERR_DBG, ("Family.addToParentages - error %s not found in dctPeople" % sMothersKey))
+            dbgPrint(ERR_DBG, ("Family.addChildren - error %s not found in dctPeople" % sMothersKey))
             return None
 
         try:
             father = self.dctPeople[sFathersKey]
         except KeyError:
-            dbgPrint(ERR_DBG, ("Family.addToParentages - error %s not found in dctPeople" % sFathersKey))
+            dbgPrint(ERR_DBG, ("Family.addChildren - error %s not found in dctPeople" % sFathersKey))
             return None
 
         sParentageKey = self._makeParentageKey2(sMothersKey, sFathersKey)
@@ -72,11 +72,11 @@ class Family:
 
         mother.setPartnerKey(sFathersKey)
         father.setPartnerKey(sMothersKey)
-        if sParentageKey in self.dctParentages:
-            lstChildren = self.dctParentages[sParentageKey]
+        if sParentageKey in self.dctPartnerships:
+            lstChildren = self.dctPartnerships[sParentageKey]
         else:
             lstChildren = list()
-            self.dctParentages[sParentageKey] = lstChildren
+            self.dctPartnerships[sParentageKey] = lstChildren
 
         lstChildren.append(sPersonKey)
 
@@ -97,7 +97,7 @@ class Family:
             return
 
         try:
-            lstChildren = self.dctParentages[sParentageKey]
+            lstChildren = self.dctPartnerships[sParentageKey]
             if len(lstChildren) == 0:
                 dbgPrint(INF_DBG, ("FamilyTree.addToRoots: no children; returning"))
                 return
@@ -126,7 +126,7 @@ class Family:
     def clearAll(self):
 
         self.dctPeople.clear()
-        self.dctParentages.clear()
+        self.dctPartnerships.clear()
 
         return(True, "OK", None)
 
@@ -156,11 +156,11 @@ class Family:
             sParentageKey = self._makeParentageKey2(sMothersKey, sFathersKey)
             if (sParentageKey != None):
                 try:
-                    lstChildren = self.dctParentages[sParentageKey]
+                    lstChildren = self.dctPartnerships[sParentageKey]
                     if sPersonKey in lstChildren:
                         lstChildren.remove(sPersonKey)
                         if len(lstChildren) == 0:
-                            del self.dctParentages[sParentageKey]
+                            del self.dctPartnerships[sParentageKey]
                 except KeyError:
                     pass
 
@@ -200,7 +200,7 @@ class Family:
         # ---------------------------------------------------------------------------
         # Remove children from dctParentages values if their keys aren't in dctPeople
         # ---------------------------------------------------------------------------
-        for sParentsKey, lstChildren in self.dctParentages.items():
+        for sParentsKey, lstChildren in self.dctPartnerships.items():
             bListModified = False
             for nIdx in range(0, len(lstChildren)):
                 if not lstChildren[nIdx] in self.dctPeople:
@@ -233,7 +233,7 @@ class Family:
     # ------------------------------------------------------------
     # Extracts and returns the person names from a person-key
     # ------------------------------------------------------------
-    def getPersonNames(self, sPersonKey):
+    def getPersonsNames(self, sPersonKey):
 
         sPersonNames = sPersonKey.split('#')
 
@@ -247,7 +247,7 @@ class Family:
     def _getRoots(self):
 
         lstRoots = list()
-        for sParentageKey in self.dctParentages.keys():
+        for sParentageKey in self.dctPartnerships.keys():
             sMothersKey, sFathersKey = self._getPersonKeys(sParentageKey)
             try:
                 mother = self.dctPeople[sMothersKey]
@@ -270,19 +270,19 @@ class Family:
     # end def _getRoots()
 
     # ------------------------------------------------------------
-    # Lists all parentages in the family
+    # Lists all partners in the family
     # ------------------------------------------------------------
-    def listParentages(self):
+    def listPartnerships(self):
 
         sResultBuff = ""
 
-        for sParentageKey, lstChildren in self.dctParentages.items():
+        for sParentageKey, lstChildren in self.dctPartnerships.items():
             sMotherKey, sFathersKey = self._getPersonKeys(sParentageKey)
             sLine = ("'%s %s' & '%s %s':\n" % (self.dctPeople[sMotherKey].sFirst, self.dctPeople[sMotherKey].sLast,
                                           self.dctPeople[sFathersKey].sFirst, self.dctPeople[sFathersKey].sLast))
             sResultBuff += sLine
             for sPersonKey in lstChildren:
-                sFirst, sLast = self.getPersonNames(sPersonKey)
+                sFirst, sLast = self.getPersonsNames(sPersonKey)
                 sLine = ("    '%s %s'\n" % (sFirst, sLast))
                 sResultBuff += sLine
 
@@ -324,7 +324,7 @@ class Family:
     # end def makePersonKey()
 
     # ------------------------------------------------------------
-    # Creates dictionary key for parentages
+    # Creates dictionary key for partners
     # ------------------------------------------------------------
     def _makeParentageKey2(self, sMothersKey, sFathersKey):
 
@@ -340,7 +340,7 @@ class Family:
     # end def _makeParentageKey2()
 
     # ------------------------------------------------------------
-    # Creates dictionary key for parentages
+    # Creates dictionary key for partners
     # ------------------------------------------------------------
     def _makeParentageKey4(self, sMothersFirst, sMothersLast, sFathersFirst, sFathersLast):
 
@@ -381,7 +381,7 @@ class Family:
 
         sParentageKey = self._makeParentageKey4(sMothersFirst, sMothersLast, sFathersFirst, sFathersLast)
         try:
-            lstChildren = self.dctParentages[sParentageKey]
+            lstChildren = self.dctPartnerships[sParentageKey]
             
             # --------------------------------------------------
             # For all children, clear the values for the parents
@@ -397,7 +397,7 @@ class Family:
             # -------------------------------
             # Delete the parentage dictionary
             # -------------------------------
-            del self.dctParentages[sParentageKey]
+            del self.dctPartnerships[sParentageKey]
 
             return(True, None, None)
         except KeyError as noKids:
@@ -474,7 +474,7 @@ class Family:
         person.setFathersKey(sFathersKey)
         sMothersKey = person.getMothersKey()
         if sMothersKey != None:
-            self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
+            self.addChildren(sPersonKey, sMothersKey, sFathersKey)
 
         return(True, sPersonKey, None)
 
@@ -504,14 +504,14 @@ class Family:
             return(False, sErrorInfo, None)
 
         if not sMothersKey in self.dctPeople:
-            sErrorInfo = ("setmother - father '%s %s' not found\n" % (sMothersFirst, sMothersLast))
+            sErrorInfo = ("setmother - mother '%s %s' not found\n" % (sMothersFirst, sMothersLast))
             return(False, sErrorInfo, None)
 
         person = self.dctPeople[sPersonKey]
         person.setMothersKey(sMothersKey)
         sFathersKey = person.getFathersKey()
         if sFathersKey != None:
-            self.addToParentages(sPersonKey, sMothersKey, sFathersKey)
+            self.addChildren(sPersonKey, sMothersKey, sFathersKey)
 
         return(True, sPersonKey, None)
 
@@ -530,16 +530,21 @@ class Family:
             sError = ("setpartners: mother's and father's first and last names must be specified\n")
             return(False, None, sError)
 
-        if sMothersKey in self.dctPeople:
+        if (sMothersKey in self.dctPeople) and (sFathersKey in self.dctPeople):
             self.dctPeople[sMothersKey].setPartnerKey(sFathersKey)
-        else:
-            sError = ("setpartners: '%s %s' not known\n" %s (sMothersFirst, sMothersLast))
-            return(False, None, sError)
-
-        if sFathersKey in self.dctPeople:
             self.dctPeople[sFathersKey].setPartnerKey(sMothersKey)
+
+            sParentageKey = self._makeParentageKey2(sMothersKey, sFathersKey)
+            self.dctPartnerships[sParentageKey] = list()
         else:
-            sError = ("setpartners: '%s %s' not known\n" %s (sFathersFirst, sFathersLast))
+            if (not sMothersKey in self.dctPeople) and (not sFathersKey in self.dctPeople):
+                sError = ("setpartners: mother '%s %s' and father '%s %s' not known\n" % \
+                    (sMothersFirst, sMothersLast, sFathersFirst, sFathersLast))
+            elif not sMothersKey in self.dctPeople:
+                sError = ("setpartners: mother '%s %s' not known\n" % (sMothersFirst, sMothersLast))
+            else:
+                sError = ("setpartners: father '%s %s' not known\n" % (sFathersFirst, sFathersLast))
+
             return(False, None, sError)
 
         return(True, "OK\n", None)
@@ -583,7 +588,7 @@ class Family:
                 sParentageKey = self._makeParentageKey4(mother.sFirst, mother.sLast, father.sFirst, father.sLast)
                 if sParentageKey != None:
                     try:
-                        lstChildren2 = self.dctParentages[sParentageKey]
+                        lstChildren2 = self.dctPartnerships[sParentageKey]
                         sReturnBuff = self.showBranch(lstChildren2, nLevel+1, sReturnBuff)
                     except KeyError:
                         pass
@@ -611,7 +616,7 @@ class Family:
             return (False, None, sReturnBuff)
 
         try:
-            lstChildren = self.dctParentages[sParentageKey]
+            lstChildren = self.dctPartnerships[sParentageKey]
             for sPersonKey in lstChildren:
                 person = self.dctPeople[sPersonKey]
                 sLine = ("'%s %s' (%s), born: %s\n" % \
@@ -693,7 +698,7 @@ class Family:
         lstRoots = self._getRoots()     
 
         # ---------------------------------------------------------------------------
-        # Find roots who are in the parentages dictionary with their partners, show
+        # Find roots who are in the partners dictionary with their partners, show
         # their branches
         # ---------------------------------------------------------------------------
         for sParentageKey in lstRoots:
@@ -709,7 +714,7 @@ class Family:
                 (mother.sFirst, mother.sLast, father.sFirst, father.sLast))
             sReturnBuff += sLine
 
-            lstChildren = self.dctParentages[sParentageKey]
+            lstChildren = self.dctPartnerships[sParentageKey]
             sReturnBuff = self.showBranch(lstChildren, 1, sReturnBuff)
 
         return(sReturnBuff)

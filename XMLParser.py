@@ -221,10 +221,10 @@ class XMLParser(object):
             # end for infoItem in infoList
 
             # ----------------------------------------------------------------------------
-            # Set partner relationships between parents, add Person to parentages register
+            # Set partner relationships between parents, add Person to partners register
             # ----------------------------------------------------------------------------
             if (sMothersKey != None) and (sFathersKey != None):
-                bSuccess = family.addToParentages(sPersonKey, sMothersKey, sFathersKey)
+                bSuccess = family.addChildren(sPersonKey, sMothersKey, sFathersKey)
 
         except Exception as extinction:
             dbgPrint(ERR_DBG, ("XMLParser.processPersonXml - error processing: ", personXML.attrib))
@@ -240,9 +240,9 @@ class XMLParser(object):
     # ------------------------------------------------------------
     def saveFile(self, sXMLfileName, family):
 
-        # --------------------------------
-        # Create root element <parentages>
-        # --------------------------------
+        # ----------------------------
+        # Create root element <people>
+        # ----------------------------
         e_people = etree.Element("people")
 
         # -----------------
@@ -269,7 +269,7 @@ class XMLParser(object):
             # -------------------------------------------------------------------------
             sFathersKey = person.getFathersKey()
             if sFathersKey != None:
-                sFirst, sLast = family.getPersonNames(sFathersKey)
+                sFirst, sLast = family.getPersonsNames(sFathersKey)
                 if (sFirst != None) or (sLast != None):
                     e_father = etree.Element("father")
                     if sFirst != None:
@@ -283,7 +283,7 @@ class XMLParser(object):
             # -------------------------------------------------------------------------
             sMothersKey = person.getMothersKey()
             if sMothersKey != None:
-                sFirst, sLast = family.getPersonNames(sMothersKey)
+                sFirst, sLast = family.getPersonsNames(sMothersKey)
                 if (sFirst != None) or (sLast != None):
                     e_mother = etree.Element("mother")
                     if sFirst != None:
@@ -295,17 +295,17 @@ class XMLParser(object):
             # -------------------------------------------------------------------------
             # Create subelement <birthplc>, set attributes, append it to element <person>
             # -------------------------------------------------------------------------
-            sBirthCity, sBirthState, sBirthCountry, sBirthPostCode = person.getBirthPlace()
-            if (sBirthCity != None) or (sBirthState != None) or (sBirthCountry != None) or (sBirthPostCode != None):
+            sCity, sState, sCountry, sPostCode = person.getBirthPlace()
+            if (sCity != None) or (sState != None) or (sCountry != None) or (sPostCode != None):
                 e_birthplc = etree.Element("birthplc")
-                if sBirthCity != None:
-                    e_birthplc.attrib["city"] = sBirthCity
-                if sBirthState != None:
-                    e_birthplc.attrib["state"] = sBirthState
-                if sBirthCountry != None:
-                    e_birthplc.attrib["country"] = sBirthCountry
-                if sBirthPostCode != None:
-                    e_birthplc.attrib["postcode"] = sBirthPostCode
+                if sCity != None:
+                    e_birthplc.attrib["city"] = sCity
+                if sState != None:
+                    e_birthplc.attrib["state"] = sState
+                if sCountry != None:
+                    e_birthplc.attrib["country"] = sCountry
+                if sPostCode != None:
+                    e_birthplc.attrib["postcode"] = sPostCode
                 e_person.append(e_birthplc)
 
         # end for sPersonKey in family.dctPeople

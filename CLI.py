@@ -54,7 +54,7 @@ class CLI(cmd.Cmd):
     # ------------------------------------------------------------
     def do_clearall(self, line):
         """clearall
-        Clears all content - people, parentages, etc.
+        Clears all content - people, partnerships, etc.
         e.g., clearall"""
 
         dbgPrint(INF_DBG, "CLI.do_clearall - entry")
@@ -111,25 +111,25 @@ class CLI(cmd.Cmd):
     # end do_exit()
 
     # ------------------------------------------------------------
-    # Lists all parentages in the family
+    # Lists all partners in the family
     # ------------------------------------------------------------
-    def do_listparentages(self, line):
-        """listparentages
-        Lists all parentages between people in the family
-        e.g., listparentages"""
+    def do_listpartners(self, line):
+        """listpartners
+        Lists all partners between people in the family
+        e.g., listpartners"""
 
-        dbgPrint(INF_DBG, "CLI.do_listparentages - entry")
+        dbgPrint(INF_DBG, "CLI.do_listpartners - entry")
 
         lstTokens = line.split()
         if len(lstTokens) == 0:
-            bSuccess, sSuccess, sFailure = self.family.listParentages()
+            bSuccess, sSuccess, sFailure = self.family.listPartnerships()
             print(sSuccess) if bSuccess else print(sFailure)
         else:
-            print ("listparentages: invalid parameters (try help listparentages)")
+            print ("listpartners: invalid parameters (try help listpartners)")
         
         return
 
-    # end do_listparentages()
+    # end do_listpartners()
 
     # ------------------------------------------------------------
     # Lists all the people in the family
@@ -442,7 +442,7 @@ class CLI(cmd.Cmd):
     # end do_showperson()
 
     # ------------------------------------------------------------
-    # Shows all information about a person
+    # Shows the family tree
     # ------------------------------------------------------------
     def do_showtree(self, line):
         """showtree
